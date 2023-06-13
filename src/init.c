@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <stdlib.h>
+#include <stddef.h>
 
 #include "interrupts.h"
 
@@ -23,10 +23,18 @@ static void reset_handler(void)
     uint16_t *init_values_ptr = &_etext;
     uint16_t *data_ptr = &_sdata;
 
-    if (init_values_ptr != data_ptr) {
-            for (; data_ptr < &_edata;) {
-                    *data_ptr++ = *init_values_ptr++;
-            }
+    if (init_values_ptr != data_ptr)
+    {
+        for (; data_ptr < &_edata;)
+        {
+            *data_ptr++ = *init_values_ptr++;
+        }
+    }
+
+    /* Clear the zero segment */
+    for (uint16_t *bss_ptr = &_sbss; bss_ptr < &_ebss;)
+    {
+        *bss_ptr++ = 0;
     }
 
     /* Branch to main function */
@@ -36,8 +44,8 @@ static void reset_handler(void)
     while (1);
 }
 
-__attribute__ ((section(".vectors")))
-static const void *exception_vectors[] =
+__attribute__ ((section(".vectors"))) __attribute__((used))
+static const void *exception_vectors[256] =
 {
     &_estack,
     reset_handler,
@@ -86,7 +94,8 @@ static const void *exception_vectors[] =
     trap12_handler,
     trap13_handler,
     trap14_handler,
-    trap15_handler
+    trap15_handler,
+    NULL
 };
 
 void putchar_(char c) {}
