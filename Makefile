@@ -5,7 +5,7 @@ SPLIT_ROM = bin/split_rom.py
 MISTER_HOSTNAME=mister-dev
 
 TARGET = finalb_test
-SRCS = init.c main.c interrupts_default.c printf/printf.c
+SRCS = init.c main.c interrupts_default.c comms.c printf/printf.c
 
 
 BUILD_DIR = build/$(TARGET)
@@ -21,9 +21,10 @@ DEFINES = -DPRINTF_SUPPORT_DECIMAL_SPECIFIERS=0 \
 	-DPRINTF_ALIAS_STANDARD_FUNCTION_NAMES=1 \
 	-DPRINTF_ALIAS_STANDARD_FUNCTION_NAMES_HARD=1
 
-CFLAGS = -march=68000 -ffreestanding $(DEFINES)
+CFLAGS = -march=68000 -ffreestanding $(DEFINES) -O2
 LIBS = -lgcc
 LDFLAGS = -march=68000 -static -nostdlib
+
 
 ifeq ($(TARGET),finalb_test)
 GAME = finalb
@@ -36,6 +37,9 @@ ORIGINAL = 1
 else
 error
 endif
+
+EPROM_SIZE ?= 0x40000
+EPROM_TYPE ?= W27C020
 
 ORIGINAL ?= 0
 GAME_DIR = $(BUILD_DIR)/$(GAME)
@@ -52,11 +56,18 @@ all: $(BUILT_BINS)
 $(BUILD_DIR)/cpu.bin: $(BUILD_DIR)/cpu.elf
 	$(OBJCOPY) -O binary $< $@
 
-$(GAME_DIR)/$(CPU_ROM_HIGH): $(BUILD_DIR)/cpu.bin | $(GAME_DIR)
-	$(SPLIT_ROM) $@ $< 0x00001 $(CPU_ROM_SIZE)
+$(GAME_DIR)/$(CPU_ROM_HIGH): $(BUILD_DIR)/cpu.bin $(SPLIT_ROM) | $(GAME_DIR)
+	$(SPLIT_ROM) $@ $< 2 1 $(CPU_ROM_SIZE)
 
-$(GAME_DIR)/$(CPU_ROM_LOW): $(BUILD_DIR)/cpu.bin | $(GAME_DIR)
-	$(SPLIT_ROM) $@ $< 0x00000 $(CPU_ROM_SIZE)
+$(GAME_DIR)/$(CPU_ROM_LOW): $(BUILD_DIR)/cpu.bin $(SPLIT_ROM) | $(GAME_DIR)
+	$(SPLIT_ROM) $@ $< 2 0 $(CPU_ROM_SIZE)
+
+$(BUILD_DIR)/cpu_high_$(EPROM_SIZE).bin: $(BUILD_DIR)/cpu.bin $(SPLIT_ROM) | $(GAME_DIR)
+	$(SPLIT_ROM) $@ $< 2 1 $(EPROM_SIZE)
+
+$(BUILD_DIR)/cpu_low_$(EPROM_SIZE).bin: $(BUILD_DIR)/cpu.bin $(SPLIT_ROM) | $(GAME_DIR)
+	$(SPLIT_ROM) $@ $< 2 0 $(EPROM_SIZE)
+
 
 $(BUILD_DIR)/%.o: src/%.c $(GLOBAL_DEPS) | $(BUILD_DIRS)
 	@echo $@
@@ -83,18 +94,14 @@ run: $(BUILT_BINS)
 	mkdir -p mame
 	cd mame && ../$(MAME) -window -nomaximize -resolution0 640x480 -rompath "$(ROMPATH)" $(GAME)
 
-flash_low: $(GAME_DIR)/$(MAIN_LOW_BIN)
-	minipro -p W27C020 -w $<
+flash_low: $(BUILD_DIR)/cpu_low_$(EPROM_SIZE).bin
+	minipro -p $(EPROM_TYPE) -w $<
 
-flash_high: $(GAME_DIR)/$(MAIN_HIGH_BIN)
-	minipro -p W27C020 -w $<
+flash_high: $(BUILD_DIR)/cpu_high_$(EPROM_SIZE).bin
+	minipro -p $(EPROM_TYPE) -w $<
 
-flash_audio_low: $(GAME_DIR)/$(AUDIO_LOW_BIN)
-	cat $< $< $< $< > $<.4x
-	minipro -p W27C020 -w $<.4x
-
-flash_audio_high: $(GAME_DIR)/$(AUDIO_HIGH_BIN)
-	cat $< $< $< $< > $<.4x
-	minipro -p W27C020 -w $<.4x
+picorom: $(GAME_DIR)/$(CPU_ROM_HIGH) $(GAME_DIR)/$(CPU_ROM_LOW)
+	picorom_cli upload cpu_low $(GAME_DIR)/$(CPU_ROM_LOW)
+	picorom_cli upload cpu_high $(GAME_DIR)/$(CPU_ROM_HIGH)
 
 -include $(OBJS:o=d)

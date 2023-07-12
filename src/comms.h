@@ -1,0 +1,9 @@
+#if !defined(COMMS_H)
+#define COMMS_H 1
+
+bool comms_check_active();
+bool comms_update();
+int comms_read(void *buffer, int maxlen);
+int comms_write(const void *data, int len);
+
+#endif // COMMS_H

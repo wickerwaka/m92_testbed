@@ -6,13 +6,11 @@ MEMORY
 
 STACK_SIZE = 0x2000;
 
-/* Section Definitions */
 SECTIONS
 {
     .text :
     {
         KEEP(*(.vectors .vectors.*));
-        *(.eh_frame);
         *(.text .text.*);
         *(.rodata .rodata.*);
         . = ALIGN(2);
@@ -21,14 +19,12 @@ SECTIONS
 
     . = .;
 
-    _etext_chk = .;
-
-    /* .bss section which is used for uninitialized data */
     .bss (NOLOAD) :
     {
         _sbss = . ;
         *(.bss .bss.*)
         *(COMMON)
+        . = ALIGN(2);
         _ebss = . ;
     } > ram
 
@@ -36,10 +32,10 @@ SECTIONS
     {
         _sdata = .;
         *(.data*);
+        . = ALIGN(2);
         _edata = .;
     } > ram AT >rom
 
-    /* stack section */
     .stack (NOLOAD):
     {
         . = ALIGN(2);
