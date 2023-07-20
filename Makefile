@@ -101,7 +101,7 @@ flash_high: $(BUILD_DIR)/cpu_high_$(EPROM_SIZE).bin
 	minipro -p $(EPROM_TYPE) -w $<
 
 picorom: $(GAME_DIR)/$(CPU_ROM_HIGH) $(GAME_DIR)/$(CPU_ROM_LOW)
-	picorom_cli upload cpu_low $(GAME_DIR)/$(CPU_ROM_LOW)
-	picorom_cli upload cpu_high $(GAME_DIR)/$(CPU_ROM_HIGH)
+	picorom upload cpu_low $(GAME_DIR)/$(CPU_ROM_LOW)
+	picorom upload cpu_high $(GAME_DIR)/$(CPU_ROM_HIGH)
 
 -include $(OBJS:o=d)

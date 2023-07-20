@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "printf/printf.h"
+
 #include "comms.h"
 
 typedef struct
@@ -74,6 +76,13 @@ bool comms_update()
     {
         comms_active = false;
     }
+
+    return active;
+}
+
+void comms_status(char *str, int len)
+{
+    snprintf(str, len, "ACT: %01X IN: %02X/%02X OUT: %02X/%02X  ", comms_regs->active.v, comms_regs->in_seq.v, comms_in_seq, comms_regs->out_seq.v, comms_out_seq);
 }
 
 int comms_read(void *buffer, int maxlen)
