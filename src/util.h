@@ -2,10 +2,15 @@
 #define UTIL_H 1
 
 #include <stdint.h>
+#include <stddef.h>
 
-static inline void memsetb(void *ptr, uint8_t c, size_t len)
+#if !defined(__FAR)
+#define __far
+#endif
+
+static inline void memsetb(__far void *ptr, uint8_t c, size_t len)
 {
-    uint8_t *p = (uint8_t *)ptr;
+    __far uint8_t *p = (__far uint8_t *)ptr;
     while( len )
     {
         *p = c;
@@ -14,9 +19,9 @@ static inline void memsetb(void *ptr, uint8_t c, size_t len)
     }
 }
 
-static inline void memsetw(void *ptr, uint16_t c, size_t len)
+static inline void memsetw(__far void *ptr, uint16_t c, size_t len)
 {
-    uint16_t *p = (uint16_t *)ptr;
+    __far uint16_t *p = (__far uint16_t *)ptr;
     while( len )
     {
         *p = c;
@@ -25,15 +30,15 @@ static inline void memsetw(void *ptr, uint16_t c, size_t len)
     }
 }
 
-static inline void memset(void *ptr, int c, size_t len)
+static inline void memset(__far void *ptr, int c, size_t len)
 {
     memsetb(ptr, c, len);
 }
 
-static inline void memcpyb(void *a, const void *b, size_t len)
+static inline void memcpyb(__far void *a, const __far void *b, size_t len)
 {
-    uint8_t *p_a = (uint8_t *)a;
-    uint8_t *p_b = (uint8_t *)b;
+    __far uint8_t *p_a = (__far uint8_t *)a;
+    __far uint8_t *p_b = (__far uint8_t *)b;
 
     while( len )
     {
@@ -44,10 +49,10 @@ static inline void memcpyb(void *a, const void *b, size_t len)
     }
 }
 
-static inline void memcpyw(void *a, const void *b, size_t len)
+static inline void memcpyw(__far void *a, const __far void *b, size_t len)
 {
-    uint16_t *p_a = (uint16_t *)a;
-    uint16_t *p_b = (uint16_t *)b;
+    __far uint16_t *p_a = (__far uint16_t *)a;
+    __far uint16_t *p_b = (__far uint16_t *)b;
 
     while( len )
     {
@@ -61,6 +66,42 @@ static inline void memcpyw(void *a, const void *b, size_t len)
 static inline void memcpy(void *a, const void *b, size_t len)
 {
     memcpyb(a, b, len);
+}
+
+static inline uint8_t __inb (unsigned __port)
+{
+    unsigned char __val;
+    __asm volatile ("{inb %1, %0|in %0, %1}"
+		  : "=Ral" (__val)
+		  : "Nd" (__port));
+    return (uint8_t) __val;
+}
+
+static inline uint16_t __inw (unsigned __port)
+{
+    unsigned __val;
+    __asm volatile ("{inw %1, %0|in %0, %1}"
+		  : "=a" (__val)
+		  : "Nd" (__port));
+    return __val;
+}
+
+
+static inline uint8_t __outb (unsigned __port, uint8_t __val)
+{
+    __asm volatile ("{outb %1, %0|out %0, %1}"
+		  : /* no outputs */
+		  : "Nd" (__port),
+		    "Ral" ((unsigned char) __val));
+    return __val;
+}
+
+static inline uint16_t __outw (unsigned __port, unsigned __val)
+{
+    __asm volatile ("{outw %1, %0|out %0, %1}"
+		  : /* no outputs */
+		  : "Nd" (__port), "a" (__val));
+    return __val;
 }
 
 #endif

@@ -25,7 +25,7 @@ class Pico:
     def do_cmd(self, cmd : int, arg0 : int, arg1 : int, data : Optional[bytes] = None, response_size : int = 0) -> bytearray:
         if data is None:
             data = b''
-        header = pack(">BIIH", cmd, arg0, arg1, len(data))
+        header = pack("<BIIH", cmd, arg0, arg1, len(data))
         self.pico.write(header + data)
 
         resp = self.pico.read_exact(response_size + 1, timeout=5)
@@ -42,7 +42,7 @@ class Pico:
         data = self.do_cmd(CMD_READ_WORDS, addr, count, None, count * 2)
         ints = []
         for high, low in zip(data[0::2], data[1::2]):
-            ints.append(high << 8 | low)
+            ints.append(low << 8 | high)
         return ints
 
     def write_bytes(self, addr : int, data: bytes):
@@ -51,7 +51,7 @@ class Pico:
     def write_words(self, addr : int, data: List[int]):
         words = bytearray()
         for x in data:
-            words += pack(">H", x)
+            words += pack("<H", x)
         self.do_cmd(CMD_WRITE_WORDS, addr, 0, words, 0)
 
     def fill_bytes(self, addr: int, count: int, value: int):
@@ -59,7 +59,7 @@ class Pico:
         self.do_cmd(CMD_FILL_BYTES, addr, count, byte, 0)
 
     def fill_words(self, addr: int, count: int, value: int):
-        word = pack(">H", value)
+        word = pack("<H", value)
         self.do_cmd(CMD_FILL_WORDS, addr, count, word, 0)
 
 class MemoryByteView:

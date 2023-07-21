@@ -3,6 +3,7 @@
 
 #include "printf/printf.h"
 
+#include "util.h"
 #include "comms.h"
 
 typedef struct
@@ -33,7 +34,7 @@ typedef volatile struct CommsRegisters
 } CommsRegisters;
 _Static_assert(sizeof(CommsRegisters) == 0x400, "CommsRegisters size mismatch");
 
-CommsRegisters *comms_regs = (CommsRegisters *)0x3fc00;
+__far CommsRegisters *comms_regs = (__far CommsRegisters *)0x3000fc00;
 
 static bool magic_valid = false;
 static bool comms_active = false;
@@ -82,7 +83,7 @@ bool comms_update()
 
 void comms_status(char *str, int len)
 {
-    snprintf(str, len, "ACT: %01X IN: %02X/%02X OUT: %02X/%02X  ", comms_regs->active.v, comms_regs->in_seq.v, comms_in_seq, comms_regs->out_seq.v, comms_out_seq);
+    //snprintf(str, len, "ACT: %01X IN: %02X/%02X OUT: %02X/%02X  ", comms_regs->active.v, comms_regs->in_seq.v, comms_in_seq, comms_regs->out_seq.v, comms_out_seq);
 }
 
 int comms_read(void *buffer, int maxlen)
@@ -107,13 +108,13 @@ int comms_read(void *buffer, int maxlen)
     return len;
 }
 
-int comms_write(const void *data, int len)
+int comms_write(const __far void *data, int len)
 {
     int sent = 0;
 
     if (!comms_update()) return 0;
 
-    const uint8_t *data8 = (const uint8_t *)data;
+    const __far uint8_t *data8 = (const __far uint8_t *)data;
 
     while (sent < len)
     {

@@ -15,6 +15,8 @@ length = next_power_of_2(int(sys.argv[5], 0))
 data = open(infile, "rb").read()
 
 split_data = data[start_byte::step_size]
+if len(split_data) > length:
+    split_data = split_data[:length]
 real_len = len(split_data)
 pow2_len = next_power_of_2(real_len)
 
