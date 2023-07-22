@@ -5,7 +5,7 @@ SPLIT_ROM = bin/split_rom.py
 MISTER_HOSTNAME=mister-dev
 
 TARGET = gunforce_test
-C_SRCS = main.c comms.c interrupts_default.c init.c
+C_SRCS = main.c comms.c interrupts_default.c init.c printf/printf.c
 ASM_SRCS = entry.S
 
 BUILD_DIR = build/$(TARGET)
@@ -21,7 +21,7 @@ DEFINES = -DPRINTF_SUPPORT_DECIMAL_SPECIFIERS=0 \
 	-DPRINTF_ALIAS_STANDARD_FUNCTION_NAMES=1 \
 	-DPRINTF_ALIAS_STANDARD_FUNCTION_NAMES_HARD=1
 
-CFLAGS = -march=v30 -mcmodel=small -ffreestanding $(DEFINES) -O0
+CFLAGS = -march=v30 -mcmodel=small -ffreestanding $(DEFINES) -O2
 LIBS = -lgcc
 LDFLAGS = $(CFLAGS) -static -nostdlib
 

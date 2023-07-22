@@ -68,18 +68,18 @@ static inline void memcpy(void *a, const void *b, size_t len)
     memcpyb(a, b, len);
 }
 
-static inline uint8_t __inb (unsigned __port)
+static inline uint8_t __inb (uint16_t __port)
 {
-    unsigned char __val;
+    uint8_t __val;
     __asm volatile ("{inb %1, %0|in %0, %1}"
 		  : "=Ral" (__val)
 		  : "Nd" (__port));
-    return (uint8_t) __val;
+    return __val;
 }
 
-static inline uint16_t __inw (unsigned __port)
+static inline uint16_t __inw (uint16_t __port)
 {
-    unsigned __val;
+    uint16_t __val;
     __asm volatile ("{inw %1, %0|in %0, %1}"
 		  : "=a" (__val)
 		  : "Nd" (__port));
@@ -87,16 +87,16 @@ static inline uint16_t __inw (unsigned __port)
 }
 
 
-static inline uint8_t __outb (unsigned __port, uint8_t __val)
+static inline uint8_t __outb (uint16_t __port, uint8_t __val)
 {
     __asm volatile ("{outb %1, %0|out %0, %1}"
 		  : /* no outputs */
 		  : "Nd" (__port),
-		    "Ral" ((unsigned char) __val));
+		    "Ral" ((uint8_t) __val));
     return __val;
 }
 
-static inline uint16_t __outw (unsigned __port, unsigned __val)
+static inline uint16_t __outw (uint16_t __port, uint16_t __val)
 {
     __asm volatile ("{outw %1, %0|out %0, %1}"
 		  : /* no outputs */

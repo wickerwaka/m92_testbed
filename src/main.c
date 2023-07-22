@@ -8,7 +8,6 @@
 
 char last_cmd[32];
 
-
 enum
 {
     CMD_IDLE = 0,
@@ -175,11 +174,36 @@ void process_cmd(Cmd *cmd)
 
 Cmd active_cmd;
 
+void pf_enable(uint8_t idx, bool enabled)
+{
+    uint16_t port = 0x98 + ((idx & 0x3) << 1);
+    if (enabled)
+        __outw(port, 0x00);
+    else
+        __outw(port, 0x10);
+}
+
+void pf_set_xy(uint8_t idx, uint16_t x, uint16_t y)
+{
+    uint16_t x_port = 0x84 + ((idx & 0x3) << 3);
+    uint16_t y_port = 0x80 + ((idx & 0x3) << 3);
+
+    __outw(x_port, x);
+    __outw(y_port, y);
+}
+
+
 __far uint16_t *palette_ram = (__far uint16_t *)0xf0008800;
 __far uint16_t *reg_videocontrol = (__far uint16_t *)0xf0009800;
 __far uint16_t *reg_spritecontrol = (__far uint16_t *)0xf0009000;
+__far uint16_t *vram = (__far uint16_t *)0xd0000000;
 
-int x = 0;
+uint16_t base_palette[] = {
+    0x0000, 0x3d80, 0x3100, 0x2420,
+	0x233c, 0x2b1c, 0x0e16, 0x5f59,
+	0x0114, 0x322c, 0x2500, 0x2653,
+	0x3e30, 0x01f1, 0x0000, 0x0000,
+};
 
 volatile uint32_t vblank_count = 0;
 __attribute__((interrupt)) void __far vblank_handler()
@@ -194,6 +218,28 @@ void wait_vblank()
     while( cnt == vblank_count ) {}
 }
 
+void draw_pf_text(int color, uint16_t x, uint16_t y, const char *str)
+{
+    int ofs = ( y * 64 ) + x;
+
+    while(*str)
+    {
+        if( *str == '\n' )
+        {
+            y++;
+            ofs = (y * 64) + x;
+        }
+        else
+        {
+            vram[(ofs << 1) + 1] = color;
+            vram[(ofs << 1)] = *str;
+            ofs++;
+        }
+        str++;
+    }
+}
+
+
 int main()
 {
     __outb(0x40, 0x13);
@@ -205,9 +251,18 @@ int main()
     last_cmd[0] = 0;
 
     *reg_videocontrol = 0x2000;
-    palette_ram[0] = 0xffff;
+
+    memcpyw(palette_ram, base_palette, sizeof(base_palette) >> 1);
     reg_spritecontrol[4] = 0;
 
+    pf_enable(0, true);
+    pf_enable(1, false);
+    pf_enable(2, false);
+
+    pf_set_xy(0, -80, -136);
+
+    char tmp[64];
+ 
     enable_interrupts();
     
     uint8_t write_idx = 0;
@@ -221,12 +276,15 @@ int main()
             update_cmd(&active_cmd);
             process_cmd(&active_cmd);
         }
-        palette_ram[0] = color;
-        color++;
+
+        snprintf(tmp, sizeof(tmp), "VBLANK: %06X", vblank_count);
+        draw_pf_text(0, 2, 1, tmp);
+        
+        comms_status(tmp, sizeof(tmp));
+        draw_pf_text(0, 2, 2, tmp);
         wait_vblank();
         reg_spritecontrol[4] = 0;
     }
-    x++;
 
     return 0;
 }
