@@ -255,6 +255,8 @@ int main()
     memcpyw(palette_ram, base_palette, sizeof(base_palette) >> 1);
     reg_spritecontrol[4] = 0;
 
+    memsetw(vram, 0, 0x8000);
+    
     pf_enable(0, true);
     pf_enable(1, false);
     pf_enable(2, false);
@@ -279,7 +281,7 @@ int main()
 
         snprintf(tmp, sizeof(tmp), "VBLANK: %06X", vblank_count);
         draw_pf_text(0, 2, 1, tmp);
-        
+
         comms_status(tmp, sizeof(tmp));
         draw_pf_text(0, 2, 2, tmp);
         wait_vblank();
