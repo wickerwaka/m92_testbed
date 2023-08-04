@@ -6,13 +6,13 @@ _start:
     // disable interrupts
     cli
 
-    // point ds, es, ss to 0xe0000
-    mov $0xe000, %ax
+    // point ds, es, ss to 0xa0000
+    mov $0xa000, %ax
     mov %ax, %ds
     mov %ax, %es
     mov %ax, %ss
     // Set stack to end of RAM
-    xor %ax, %ax
+    mov $0x4000, %ax
     mov %ax, %sp
 
     // Zero out bss data

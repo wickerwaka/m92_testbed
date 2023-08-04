@@ -5,6 +5,12 @@
 #include "util.h"
 #include "interrupts.h"
 #include "comms.h"
+#include "v35_sfr.h"
+
+#include "game_palette.h"
+
+__far V35_SFR *init_sfr = (__far V35_SFR *)0xfff00000;
+__far V35_SFR *sfr = (__far V35_SFR *)0x9ff00000;
 
 char last_cmd[32];
 
@@ -107,7 +113,7 @@ void process_cmd(Cmd *cmd)
     {
         case CMD_WRITE_BYTES:
         {
-            //if (cmd->is_new) snprintf(last_cmd, sizeof(last_cmd), "WRITE %X BYTES @ %08X", cmd->total_bytes, cmd->arg0);
+            if (cmd->is_new) snprintf(last_cmd, sizeof(last_cmd), "WRITE %X BYTES @ %08X", cmd->total_bytes, cmd->arg0);
             uint8_t __far *addr = (__far uint8_t *)(cmd->arg0 + cmd->total_bytes_consumed);
             if( cmd->bytes_avail > 0 )
             {
@@ -118,7 +124,7 @@ void process_cmd(Cmd *cmd)
         }
         case CMD_WRITE_WORDS:
         {
-            //if (cmd->is_new) snprintf(last_cmd, sizeof(last_cmd), "WRITE %X WORDS @ %08X", cmd->total_bytes >> 1, cmd->arg0);
+            if (cmd->is_new) snprintf(last_cmd, sizeof(last_cmd), "WRITE %X WORDS @ %08X", cmd->total_bytes >> 1, cmd->arg0);
             uint16_t __far *addr = (__far uint16_t *)(cmd->arg0 + cmd->total_bytes_consumed);
             memcpyw(addr, cmd->buffer, cmd->bytes_avail >> 1);
             cmd->bytes_consumed = (cmd->bytes_avail & ~0x1);
@@ -126,14 +132,14 @@ void process_cmd(Cmd *cmd)
         }
         case CMD_READ_BYTES:
         {
-            //if (cmd->is_new) snprintf(last_cmd, sizeof(last_cmd), "READ %X BYTES @ %08X", cmd->arg1, cmd->arg0);
+            if (cmd->is_new) snprintf(last_cmd, sizeof(last_cmd), "READ %X BYTES @ %08X", cmd->arg1, cmd->arg0);
             uint8_t __far *addr = (__far uint8_t *)cmd->arg0;
             comms_write(addr, cmd->arg1);
             break;
         }
         case CMD_READ_WORDS:
         {
-            //if (cmd->is_new) snprintf(last_cmd, sizeof(last_cmd), "READ %X WORDS @ %08X", cmd->arg1, cmd->arg0);
+            if (cmd->is_new) snprintf(last_cmd, sizeof(last_cmd), "READ %X WORDS @ %08X", cmd->arg1, cmd->arg0);
             uint8_t __far *addr = (__far uint8_t *)cmd->arg0;
             for( int ofs = 0; ofs < cmd->arg1; ofs++)
             {
@@ -143,7 +149,7 @@ void process_cmd(Cmd *cmd)
         }
         case CMD_FILL_BYTES:
         {
-            //if (cmd->is_new) snprintf(last_cmd, sizeof(last_cmd), "FILL %X BYTES @ %08X", cmd->arg1, cmd->arg0);
+            if (cmd->is_new) snprintf(last_cmd, sizeof(last_cmd), "FILL %X BYTES @ %08X", cmd->arg1, cmd->arg0);
             if (cmd->bytes_avail > 0)
             {
                 int v = *(uint8_t *)cmd->buffer;
@@ -154,7 +160,7 @@ void process_cmd(Cmd *cmd)
         }
         case CMD_FILL_WORDS:
         {
-            //if (cmd->is_new) snprintf(last_cmd, sizeof(last_cmd), "FILL %X WORDS @ %08X", cmd->arg1, cmd->arg0);
+            if (cmd->is_new) snprintf(last_cmd, sizeof(last_cmd), "FILL %X WORDS @ %08X", cmd->arg1, cmd->arg0);
             if (cmd->bytes_avail > 1)
             {
                 uint16_t v = *(uint16_t *)cmd->buffer;
@@ -176,7 +182,7 @@ Cmd active_cmd;
 
 void pf_enable(uint8_t idx, bool enabled)
 {
-    uint16_t port = 0x98 + ((idx & 0x3) << 1);
+    uint16_t port = 0x80 + 10 + (idx << 1);
     if (enabled)
         __outw(port, 0x00);
     else
@@ -185,30 +191,29 @@ void pf_enable(uint8_t idx, bool enabled)
 
 void pf_set_xy(uint8_t idx, uint16_t x, uint16_t y)
 {
-    uint16_t x_port = 0x84 + ((idx & 0x3) << 3);
-    uint16_t y_port = 0x80 + ((idx & 0x3) << 3);
+    uint16_t x_port = 0x82 + ((idx & 0x1) << 2);
+    uint16_t y_port = 0x80 + ((idx & 0x1) << 2);
 
     __outw(x_port, x);
     __outw(y_port, y);
 }
 
 
-__far uint16_t *palette_ram = (__far uint16_t *)0xf0008800;
-__far uint16_t *reg_videocontrol = (__far uint16_t *)0xf0009800;
-__far uint16_t *reg_spritecontrol = (__far uint16_t *)0xf0009000;
+__far uint16_t *palette_ram = (__far uint16_t *)0xe0000000;
 __far uint16_t *vram = (__far uint16_t *)0xd0000000;
 
 uint16_t base_palette[] = {
-    0x0000, 0x3d80, 0x3100, 0x2420,
+    0x0000, 0xffff, 0x3100, 0x2420,
 	0x233c, 0x2b1c, 0x0e16, 0x5f59,
 	0x0114, 0x322c, 0x2500, 0x2653,
 	0x3e30, 0x01f1, 0x0000, 0x0000,
 };
 
 volatile uint32_t vblank_count = 0;
-__attribute__((interrupt)) void __far vblank_handler()
+__attribute__((interrupt)) void __far p0_handler()
 {
 	vblank_count++;
+    __fint();
     return;
 }
 
@@ -242,35 +247,37 @@ void draw_pf_text(int color, uint16_t x, uint16_t y, const char *str)
 
 int main()
 {
-    __outb(0x40, 0x13);
-    __outb(0x42, 0x08);
-    __outb(0x42, 0x0f);
-    __outb(0x42, 0xf2);
+    init_sfr->idb = 0x9f;
+    sfr->wtc = 0xffff; // respect READY
+    sfr->portmc1 = 0x80; // enable READY pin
+    sfr->exic0 = 0x7; // enable p0
+    sfr->exic1 = 0x47; // disable p1
+    sfr->exic2 = 0x47; // disable p2
+    sfr->prc = 0x0c; // disable internal ram, x/2 scaling
 
     memset(&active_cmd, 0, sizeof(active_cmd));
     last_cmd[0] = 0;
 
-    *reg_videocontrol = 0x2000;
+    *palette_ram = 0xffff;
 
-    memcpyw(palette_ram, base_palette, sizeof(base_palette) >> 1);
-    reg_spritecontrol[4] = 0;
+    memsetw(vram, 0x00, 0x8000);
 
-    memsetw(vram, 0, 0x8000);
-    
     pf_enable(0, true);
     pf_enable(1, false);
-    pf_enable(2, false);
 
-    pf_set_xy(0, -80, -136);
+    pf_set_xy(0, -81, -140);
+
+    memcpyw(palette_ram, game_palette, 256);
 
     char tmp[64];
  
     enable_interrupts();
     
+    //memsetw(vram, 0x50, 0x1000);
+
     uint8_t write_idx = 0;
     uint32_t comms_count = 0;
-    uint16_t color = 0;
-    
+
     while(1)
     {
         if (comms_update() )
@@ -279,13 +286,15 @@ int main()
             process_cmd(&active_cmd);
         }
 
+        wait_vblank();
+
         snprintf(tmp, sizeof(tmp), "VBLANK: %06X", vblank_count);
-        draw_pf_text(0, 2, 1, tmp);
+        draw_pf_text(3, 2, 1, tmp);
 
         comms_status(tmp, sizeof(tmp));
-        draw_pf_text(0, 2, 2, tmp);
-        wait_vblank();
-        reg_spritecontrol[4] = 0;
+        draw_pf_text(4, 2, 2, tmp);
+
+        draw_pf_text(1, 2, 3, last_cmd);
     }
 
     return 0;

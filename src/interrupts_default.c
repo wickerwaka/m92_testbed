@@ -1,22 +1,20 @@
 #include "interrupts.h"
 
-__attribute__((interrupt,weak)) void __far vblank_handler()
+__attribute__((interrupt,weak)) void __far p0_handler()
 {
+	__fint();
 	return;
 }
 
-__attribute__((interrupt,weak)) void __far dma_done_handler()
+__attribute__((interrupt,weak)) void __far p1_handler()
 {
+	__fint();
 	return;
 }
 
-__attribute__((interrupt,weak)) void __far hint_handler()
+__attribute__((interrupt,weak)) void __far p2_handler()
 {
-	return;
-}
-
-__attribute__((interrupt,weak)) void __far audio_io_handler()
-{
+	__fint();
 	return;
 }
 
