@@ -1,6 +1,6 @@
 CC = ia16-elf-gcc
 OBJCOPY = ia16-elf-objcopy
-MAME = bin/irem_emu_unsecure
+MAME = bin/irem_emu
 SPLIT_ROM = bin/split_rom.py
 MISTER_HOSTNAME=mister-dev
 

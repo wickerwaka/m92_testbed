@@ -124,8 +124,9 @@ class MemoryWordView:
         else:
             raise TypeError()
 
-#pico = Pico('cpu_low')
+if __name__ == '__main__':
+    pico = Pico('cpu_low')
 
-#memw = MemoryWordView(pico, 0x200000)
-#memw[0] = 0xffff
+    memw = MemoryWordView(pico, 0xe0000000)
+    memw[0] = 0xffff
 
