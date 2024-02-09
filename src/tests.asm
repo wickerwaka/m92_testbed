@@ -59,6 +59,16 @@ exercise_stack:
     popa
     pop cx
     pop bx
+
+    enter 16, 0
+    leave
+
+    enter 8, 1
+    leave
+
+    enter 32, 8
+    leave
+    
     ret
 
 exercise_mulu:
@@ -78,7 +88,7 @@ exercise_mul:
     imul bx, 1023
     ret
 
-exercise_string
+exercise_string:
     cld
     mov di, 0x1000
     mov ax, 0xf001
@@ -90,6 +100,19 @@ exercise_string
     mov cx, 0x10
     rep lodsw
     ret
+
+exercise_dec:
+    mov ax, 0x20
+.loop1:
+    dec ax
+    jne .loop1
+
+.loop2:
+    dec al
+    jne .loop2
+
+    ret
+
 
 
 global exercise_ops
@@ -118,6 +141,8 @@ exercise_ops:
     call exercise_mul
 
     call exercise_string
+
+    call exercise_dec
 
 
     mov dx, 0xdead
