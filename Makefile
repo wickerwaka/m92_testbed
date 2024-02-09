@@ -1,4 +1,5 @@
 CC = ia16-elf-gcc
+NASM = nasm
 OBJCOPY = ia16-elf-objcopy
 MAME = bin/irem_emu
 SPLIT_ROM = bin/split_rom.py
@@ -7,11 +8,12 @@ MISTER_HOSTNAME=mister-dev
 TARGET = airass_test
 C_SRCS = main.c comms.c interrupts_default.c init.c printf/printf.c
 ASM_SRCS = entry.S
+NASM_SRCS = tests.asm
 
 BUILD_DIR = build/$(TARGET)
 ORIGINAL_DIR = original_roms
 
-OBJS = $(addprefix $(BUILD_DIR)/, $(C_SRCS:c=o) $(ASM_SRCS:S=o))
+OBJS = $(addprefix $(BUILD_DIR)/, $(C_SRCS:c=o) $(ASM_SRCS:S=o) $(NASM_SRCS:asm=o))
 BUILD_DIRS = $(sort $(dir $(OBJS))) 
 GLOBAL_DEPS = Makefile
 
@@ -76,6 +78,10 @@ $(BUILD_DIR)/%.o: src/%.S $(GLOBAL_DEPS) | $(BUILD_DIRS)
 	@echo $@
 	@$(CC) -MMD -o $@ $(CFLAGS) -c $<
 
+$(BUILD_DIR)/%.o: src/%.asm $(GLOBAL_DEPS) | $(BUILD_DIRS)
+	@echo $@
+	@$(NASM) -MD $($@:o=d) -o $@ -f elf -D_TEXT=.text -D_BSS=.bss -D_DATA=.data $<
+
 $(BUILD_DIR)/cpu.elf: $(OBJS) linker/$(GAME).ld
 	@echo $@
 	@$(CC) -T linker/$(GAME).ld -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
@@ -92,6 +98,10 @@ $(GAME_DIR):
 debug: $(BUILT_BINS)
 	mkdir -p mame
 	cd mame && ../$(MAME) -window -nomaximize -resolution0 640x480 -debug -rompath "$(ROMPATH)" $(GAME)
+
+trace: $(BUILT_BINS)
+	mkdir -p mame
+	cd mame && ../$(MAME) -window -nomaximize -resolution0 640x480 -debug -debugscript debugger.scr -rompath "$(ROMPATH)" $(GAME)
 
 run: $(BUILT_BINS)
 	mkdir -p mame

@@ -289,18 +289,18 @@ int main()
     
     while(1)
     {
-/*        if (comms_update() )
+        if (comms_update() )
         {
             update_cmd(&active_cmd);
             process_cmd(&active_cmd);
         }
-*/
+
         snprintf(tmp, sizeof(tmp), "VBLANK: %06X", vblank_count);
         draw_pf_text(6, 2, 1, tmp);
-/*
+
         comms_status(tmp, sizeof(tmp));
         draw_pf_text(6, 2, 2, tmp);
-*/
+
         wait_vblank();
     }
 

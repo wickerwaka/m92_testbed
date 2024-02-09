@@ -1,0 +1,5 @@
+trace test.tr,maincpu,noloop,{ tracesym psw,aw,cw,dw,bw,sp,bp,ix,iy,ds1,ps,ss,ds0 }
+wpiset dead,1,w
+g
+trace off
+quit

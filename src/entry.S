@@ -5,7 +5,7 @@
 _start:
     // disable interrupts
     cli
-
+    
     // point ds, es, ss to 0xe0000
     mov $0xe000, %ax
     mov %ax, %ds
@@ -14,6 +14,8 @@ _start:
     // Set stack to end of RAM
     xor %ax, %ax
     mov %ax, %sp
+
+    call exercise_ops
 
     // Zero out bss data
 	cld
@@ -41,7 +43,56 @@ forever:
     jmp forever
 
 
+.align 256
+_nop_loop:
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    jmp _nop_loop
+
+.align 256
+_large_mov_loop:
+    movw $0xfefe, [0xfff0]
+    movw $0xfefe, [0xfff1]
+    movw $0xfefe, [0xfff2]
+    movw $0xfefe, [0xfff3]
+    jmp _large_mov_loop
+
+.align 256
+_small_mov_loop:
+    movw $0xfff0, %bx
+    jmp _small_mov_inner_loop
+.align 16
+_small_mov_inner_loop:
+    movw %ax, (%bx)
+    movw %ax, (%bx)
+    movw %ax, (%bx)
+    movw %ax, (%bx)
+    movw %ax, (%bx)
+    movw %ax, (%bx)
+    movw %ax, (%bx)
+    movw %ax, (%bx)
+    jmp _small_mov_inner_loop
+
+
+
+
+
+
 .section .reset.text, "ax"
 .globl _reset
 _reset:
-    ljmp $0x0, $_start 
+    ljmp $0x0, $_start
