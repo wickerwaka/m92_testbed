@@ -68,7 +68,30 @@ exercise_stack:
 
     enter 32, 8
     leave
-    
+
+    ret
+
+
+exercise_mem:
+    enter 32, 0
+    mov word [bp - 2], 0x8811
+    mov byte [bp - 3], 0x22
+    mov byte [bp - 4], 0x33
+    mov byte [bp - 5], 0x44
+    mov word [bp - 7], 0x5566
+
+    mov ax, [bp - 2]
+    mov ax, [bp - 4]
+    mov al, [bp - 2]
+    mov al, [bp - 1]
+    mov al, [bp - 3]
+    mov al, [bp - 4]
+    mov ax, [bp - 3]
+    mov ax, [bp - 5]
+    mov al, [bp - 6]
+    mov al, [bp - 7]
+    mov ax, [bp - 7]
+    leave
     ret
 
 exercise_mulu:
@@ -87,6 +110,18 @@ exercise_mul:
     imul di, 42
     imul bx, 1023
     ret
+
+exercise_div:
+    mov ax, 0x1000
+.divloop1:
+    xor dx, dx
+    mov cx, 0x3
+    div cx
+    cmp ax, 0
+    jne .divloop1
+
+    ret 
+
 
 exercise_string:
     cld
@@ -139,8 +174,11 @@ exercise_ops:
     call exercise_stack
     call exercise_mulu
     call exercise_mul
+    call exercise_div
 
     call exercise_string
+
+    call exercise_mem
 
     call exercise_dec
 
