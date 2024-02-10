@@ -15,7 +15,7 @@ _start:
     xor %ax, %ax
     mov %ax, %sp
 
-    call exercise_ops
+    // call exercise_ops
 
     // Zero out bss data
 	cld

@@ -280,8 +280,17 @@ int main()
 
     pf_set_xy(0, -80, -136);
 
- 
-    enable_interrupts();
+    //enable_interrupts();
+
+    
+    draw_pf_text(6, 5, 5, "HELLO WORLD");
+    
+    snprintf(tmp, sizeof(tmp), "VBLANK: %06X", vblank_count);
+    draw_pf_text(6, 2, 1, tmp);
+    
+    __outw(0xdead, 0xffff);
+
+    while(1) {}
     
     uint8_t write_idx = 0;
     uint32_t comms_count = 0;
