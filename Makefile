@@ -35,6 +35,9 @@ CPU_ROM_SIZE = 0x20000
 else ifeq ($(TARGET),gunforce)
 GAME = gunforceu
 ORIGINAL = 1
+else ifeq ($(TARGET),rtypeleo)
+GAME = rtypeleo
+ORIGINAL = 1
 else
 error
 endif
