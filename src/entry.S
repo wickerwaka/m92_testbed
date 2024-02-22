@@ -16,6 +16,10 @@ _start:
     mov %ax, %sp
 
     call exercise_ops
+    //call small_mov_loop
+    //call odd_mov_loop
+    //call push_all_loop
+    call prefetch_loop
 
     // Zero out bss data
 	cld
@@ -70,25 +74,6 @@ _large_mov_loop:
     movw $0xfefe, [0xfff2]
     movw $0xfefe, [0xfff3]
     jmp _large_mov_loop
-
-.align 256
-_small_mov_loop:
-    movw $0xfff0, %bx
-    jmp _small_mov_inner_loop
-.align 16
-_small_mov_inner_loop:
-    movw %ax, (%bx)
-    movw %ax, (%bx)
-    movw %ax, (%bx)
-    movw %ax, (%bx)
-    movw %ax, (%bx)
-    movw %ax, (%bx)
-    movw %ax, (%bx)
-    movw %ax, (%bx)
-    jmp _small_mov_inner_loop
-
-
-
 
 
 

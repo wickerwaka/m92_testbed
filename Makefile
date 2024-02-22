@@ -1,14 +1,14 @@
 CC = ia16-elf-gcc
 NASM = nasm
 OBJCOPY = ia16-elf-objcopy
-MAME = bin/irem_emu
+MAME = bin/m107_flat
 SPLIT_ROM = bin/split_rom.py
 MISTER_HOSTNAME=mister-dev
 
 TARGET = airass_test
 C_SRCS = main.c comms.c interrupts_default.c init.c printf/printf.c
 ASM_SRCS = entry.S
-NASM_SRCS = tests.asm
+NASM_SRCS = tests.asm timing.asm
 
 BUILD_DIR = build/$(TARGET)
 ORIGINAL_DIR = original_roms
@@ -101,7 +101,7 @@ debug: $(BUILT_BINS)
 
 trace: $(BUILT_BINS)
 	mkdir -p mame
-	cd mame && ../$(MAME) -window -nomaximize -resolution0 640x480 -debug -debugscript debugger.scr -rompath "$(ROMPATH)" $(GAME)
+	cd mame && ../$(MAME) -window -nomaximize -resolution0 640x480 -debug -debugscript ../add.scr -rompath "$(ROMPATH)" $(GAME)
 
 run: $(BUILT_BINS)
 	mkdir -p mame
