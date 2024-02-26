@@ -26,12 +26,12 @@ LIBS = -lgcc
 LDFLAGS = $(CFLAGS) -static -nostdlib
 
 ifeq ($(TARGET),gunforce_test)
-GAME = gunforceu
-CPU_ROM_L0 = gf_l0-d.5f
-CPU_ROM_H0 = gf_h0-d.5m
-CPU_ROM_L1 = gf_l1-d.5j
-CPU_ROM_H1 = gf_h1-d.5l
-CPU_ROM_SIZE = 0x20000
+GAME = gunforcetb
+CPU_ROM_L0 = gf_l0-d.tb
+CPU_ROM_H0 = gf_h0-d.tb
+AUDIO_ROM_L0 = gf_sl0.rom
+AUDIO_ROM_H0 = gf_sh0.rom
+CPU_ROM_SIZE = 0x40000
 else ifeq ($(TARGET),gunforce)
 GAME = gunforceu
 ORIGINAL = 1
@@ -47,7 +47,7 @@ EPROM_TYPE ?= W27C020
 
 ORIGINAL ?= 0
 GAME_DIR = $(BUILD_DIR)/$(GAME)
-BUILT_BINS = $(addprefix $(GAME_DIR)/, $(CPU_ROM_L0) $(CPU_ROM_H0) $(CPU_ROM_L1) $(CPU_ROM_H1))
+BUILT_BINS = $(addprefix $(GAME_DIR)/, $(CPU_ROM_L0) $(CPU_ROM_H0))
 
 ifeq ($(ORIGINAL),0)
 ROMPATH = ../$(BUILD_DIR);../$(ORIGINAL_DIR)
@@ -65,12 +65,6 @@ $(GAME_DIR)/$(CPU_ROM_H0): $(BUILD_DIR)/cpu.bin $(SPLIT_ROM) | $(GAME_DIR)
 
 $(GAME_DIR)/$(CPU_ROM_L0): $(BUILD_DIR)/cpu.bin $(SPLIT_ROM) | $(GAME_DIR)
 	$(SPLIT_ROM) $@ $< 2 0 $(CPU_ROM_SIZE)
-
-$(GAME_DIR)/$(CPU_ROM_H1): $(BUILD_DIR)/cpu.bin $(SPLIT_ROM) | $(GAME_DIR)
-	$(SPLIT_ROM) $@ $< 2 0x40001 $(CPU_ROM_SIZE)
-
-$(GAME_DIR)/$(CPU_ROM_L1): $(BUILD_DIR)/cpu.bin $(SPLIT_ROM) | $(GAME_DIR)
-	$(SPLIT_ROM) $@ $< 2 0x40000 $(CPU_ROM_SIZE)
 
 $(BUILD_DIR)/cpu_high_$(EPROM_SIZE).bin: $(BUILD_DIR)/cpu.bin $(SPLIT_ROM) | $(GAME_DIR)
 	$(SPLIT_ROM) $@ $< 2 1 $(EPROM_SIZE)
@@ -97,7 +91,7 @@ $(BUILD_DIRS):
 $(GAME_DIR):
 	mkdir -p $@
 
-.PHONY: flash_low flash_high run debug
+.PHONY: flash_low flash_high run debug $(GAME_DIR) 
 
 
 debug: $(BUILT_BINS)
@@ -114,10 +108,8 @@ flash_low: $(BUILD_DIR)/cpu_low_$(EPROM_SIZE).bin
 flash_high: $(BUILD_DIR)/cpu_high_$(EPROM_SIZE).bin
 	minipro -p $(EPROM_TYPE) -w $<
 
-picorom: $(GAME_DIR)/$(CPU_ROM_H0) $(GAME_DIR)/$(CPU_ROM_L0) $(GAME_DIR)/$(CPU_ROM_L1) $(GAME_DIR)/$(CPU_ROM_H1)
+picorom: $(GAME_DIR)/$(CPU_ROM_H0) $(GAME_DIR)/$(CPU_ROM_L0)
 	picorom upload cpu_low $(GAME_DIR)/$(CPU_ROM_L0) 1mbit
 	picorom upload cpu_high $(GAME_DIR)/$(CPU_ROM_H0) 1mbit
-	picorom upload cpu_low1 $(GAME_DIR)/$(CPU_ROM_L1) 1mbit
-	picorom upload cpu_high1 $(GAME_DIR)/$(CPU_ROM_H1) 1mbit
 
 -include $(OBJS:o=d)
