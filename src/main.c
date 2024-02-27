@@ -205,9 +205,38 @@ uint16_t base_palette[] = {
 	0x3e30, 0x01f1, 0x0000, 0x0000,
 };
 
+void set_timer_interval(uint16_t n)
+{
+    n = 1024 - n;
+
+    uint8_t low = n & 0x7f;
+    uint8_t high = 0x80 | ( ( n >> 7) & 0x7f );
+
+    __outb(0x00, low);
+    for( int i = 0; i < 1000; i++ ) { asm(""); };
+    __outb(0x00, high);
+    for( int i = 0; i < 1000; i++ ) { asm(""); };
+}
+
+static uint8_t old_ticks;
+static uint16_t ticks = 0;
+static inline uint16_t poll_timer()
+{
+    uint8_t new_ticks = __inb(0x08);
+    ticks += (new_ticks - old_ticks);
+    old_ticks = new_ticks;
+    return ticks;
+}
+
+
 volatile uint32_t vblank_count = 0;
+volatile uint8_t prev_vblank_tick = 0;
+volatile uint8_t vblank_tick = 0;
+
 __attribute__((interrupt)) void __far vblank_handler()
 {
+    prev_vblank_tick = vblank_tick;
+    vblank_tick = __inb(0x08);
 	vblank_count++;
     return;
 }
@@ -215,7 +244,10 @@ __attribute__((interrupt)) void __far vblank_handler()
 void wait_vblank()
 {
     uint32_t cnt = vblank_count;
-    while( cnt == vblank_count ) {}
+    while( cnt == vblank_count )
+    {
+        poll_timer();
+    }
 }
 
 void draw_pf_text(int color, uint16_t x, uint16_t y, const char *str)
@@ -239,13 +271,13 @@ void draw_pf_text(int color, uint16_t x, uint16_t y, const char *str)
     }
 }
 
-
 int main()
 {
     __outb(0x40, 0x13);
     __outb(0x42, 0x08);
     __outb(0x42, 0x0f);
-    __outb(0x42, 0xf2);
+
+    __outb(0x42, 0xfa); // MASK 0b11111010
 
     memset(&active_cmd, 0, sizeof(active_cmd));
     last_cmd[0] = 0;
@@ -256,6 +288,8 @@ int main()
     reg_spritecontrol[4] = 0;
 
     memsetw(vram, 0, 0x8000);
+
+    set_timer_interval(5);
     
     pf_enable(0, true);
     pf_enable(1, false);
@@ -270,6 +304,7 @@ int main()
     uint8_t write_idx = 0;
     uint32_t comms_count = 0;
     uint16_t color = 0;
+    uint8_t frame_ticks = 0;
     
     while(1)
     {
@@ -282,10 +317,24 @@ int main()
         snprintf(tmp, sizeof(tmp), "VBLANK: %06X", vblank_count);
         draw_pf_text(0, 2, 1, tmp);
 
+        snprintf(tmp, sizeof(tmp), "AUDIO: %3u", frame_ticks);
+        draw_pf_text(0, 2, 4, tmp);
+
+
         comms_status(tmp, sizeof(tmp));
         draw_pf_text(0, 2, 2, tmp);
         wait_vblank();
         reg_spritecontrol[4] = 0;
+
+        if (prev_vblank_tick > vblank_tick)
+        {
+            frame_ticks = (vblank_tick + 256) - prev_vblank_tick;
+        }
+        else
+        {
+            frame_ticks = vblank_tick - prev_vblank_tick;
+        }
+
     }
 
     return 0;
