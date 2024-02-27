@@ -271,6 +271,44 @@ void draw_pf_text(int color, uint16_t x, uint16_t y, const char *str)
     }
 }
 
+extern uint8_t just_nop();
+extern uint8_t ror7();
+extern uint8_t rorc80();
+extern uint8_t mov_from_mem();
+extern uint8_t mov_to_mem();
+extern uint8_t add_mem();
+
+typedef struct
+{
+    const char *name;
+    uint8_t (*func)();
+} TestDesc;
+
+TestDesc s_tests[] =
+{
+    { "NOP", just_nop },
+    { "ROR DX, 7", ror7 },
+    { "RORC DX, 80", rorc80 },
+    { "MOV AX, SS:[0]", mov_from_mem },
+    { "MOV SS:[0], AX", mov_to_mem },
+    { "ADD SS:[0], AX", add_mem }
+};
+
+const size_t NUM_TESTS = sizeof(s_tests) / sizeof(TestDesc);
+
+void run_tests(uint8_t *results)
+{
+    disable_interrupts();
+
+    for( int t = 0; t < NUM_TESTS; t++ )
+    {
+        results[t] = s_tests[t].func();
+    }
+
+    enable_interrupts();
+}
+
+
 int main()
 {
     __outb(0x40, 0x13);
@@ -289,7 +327,7 @@ int main()
 
     memsetw(vram, 0, 0x8000);
 
-    set_timer_interval(5);
+    set_timer_interval(100);
     
     pf_enable(0, true);
     pf_enable(1, false);
@@ -298,7 +336,7 @@ int main()
     pf_set_xy(0, -80, -136);
 
     char tmp[64];
- 
+
     enable_interrupts();
     
     uint8_t write_idx = 0;
@@ -306,6 +344,8 @@ int main()
     uint16_t color = 0;
     uint8_t frame_ticks = 0;
     
+    uint8_t test_results[NUM_TESTS];
+
     while(1)
     {
         if (comms_update() )
@@ -314,15 +354,23 @@ int main()
             process_cmd(&active_cmd);
         }
 
+        run_tests(test_results);
+
         snprintf(tmp, sizeof(tmp), "VBLANK: %06X", vblank_count);
         draw_pf_text(0, 2, 1, tmp);
 
         snprintf(tmp, sizeof(tmp), "AUDIO: %3u", frame_ticks);
-        draw_pf_text(0, 2, 4, tmp);
-
-
-        comms_status(tmp, sizeof(tmp));
         draw_pf_text(0, 2, 2, tmp);
+
+        for( int i = 0; i < NUM_TESTS; i++ )
+        {
+            snprintf(tmp, sizeof(tmp), "%16s: %3u", s_tests[i].name, test_results[i]);
+            draw_pf_text(0, 2, 4 + i, tmp);
+        }
+ 
+        //comms_status(tmp, sizeof(tmp));
+        //draw_pf_text(0, 2, 2, tmp);
+        
         wait_vblank();
         reg_spritecontrol[4] = 0;
 
