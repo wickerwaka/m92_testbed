@@ -6,6 +6,8 @@
 #include "interrupts.h"
 #include "comms.h"
 
+#include "timing_tests.h"
+
 char last_cmd[32];
 
 enum
@@ -198,11 +200,31 @@ __far uint16_t *reg_videocontrol = (__far uint16_t *)0xf0009800;
 __far uint16_t *reg_spritecontrol = (__far uint16_t *)0xf0009000;
 __far uint16_t *vram = (__far uint16_t *)0xd0000000;
 
-uint16_t base_palette[] = {
-    0x0000, 0x3d80, 0x3100, 0x2420,
-	0x233c, 0x2b1c, 0x0e16, 0x5f59,
-	0x0114, 0x322c, 0x2500, 0x2653,
-	0x3e30, 0x01f1, 0x0000, 0x0000,
+uint16_t base_palette[] = 
+{
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x7FFF, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x001F, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x7C1F, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x03E0, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x7FE0, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x03FF, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x7C00, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x6318, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 };
 
 void set_timer_interval(uint16_t n)
@@ -217,17 +239,6 @@ void set_timer_interval(uint16_t n)
     __outb(0x00, high);
     for( int i = 0; i < 1000; i++ ) { asm(""); };
 }
-
-static uint8_t old_ticks;
-static uint16_t ticks = 0;
-static inline uint16_t poll_timer()
-{
-    uint8_t new_ticks = __inb(0x08);
-    ticks += (new_ticks - old_ticks);
-    old_ticks = new_ticks;
-    return ticks;
-}
-
 
 volatile uint32_t vblank_count = 0;
 volatile uint8_t prev_vblank_tick = 0;
@@ -246,13 +257,13 @@ void wait_vblank()
     uint32_t cnt = vblank_count;
     while( cnt == vblank_count )
     {
-        poll_timer();
     }
 }
 
-void draw_pf_text(int color, uint16_t x, uint16_t y, const char *str)
+void draw_pf_text(uint16_t x, uint16_t y, const char *str)
 {
     int ofs = ( y * 64 ) + x;
+    uint16_t color = 0;
 
     while(*str)
     {
@@ -260,6 +271,12 @@ void draw_pf_text(int color, uint16_t x, uint16_t y, const char *str)
         {
             y++;
             ofs = (y * 64) + x;
+        }
+        else if (*str == '^')
+        {
+            *str++;
+            if (*str == '\0') break;
+            color = *str - '0';
         }
         else
         {
@@ -270,44 +287,6 @@ void draw_pf_text(int color, uint16_t x, uint16_t y, const char *str)
         str++;
     }
 }
-
-extern uint8_t just_nop();
-extern uint8_t ror7();
-extern uint8_t rorc80();
-extern uint8_t mov_from_mem();
-extern uint8_t mov_to_mem();
-extern uint8_t add_mem();
-
-typedef struct
-{
-    const char *name;
-    uint8_t (*func)();
-} TestDesc;
-
-TestDesc s_tests[] =
-{
-    { "NOP", just_nop },
-    { "ROR DX, 7", ror7 },
-    { "RORC DX, 80", rorc80 },
-    { "MOV AX, SS:[0]", mov_from_mem },
-    { "MOV SS:[0], AX", mov_to_mem },
-    { "ADD SS:[0], AX", add_mem }
-};
-
-const size_t NUM_TESTS = sizeof(s_tests) / sizeof(TestDesc);
-
-void run_tests(uint8_t *results)
-{
-    disable_interrupts();
-
-    for( int t = 0; t < NUM_TESTS; t++ )
-    {
-        results[t] = s_tests[t].func();
-    }
-
-    enable_interrupts();
-}
-
 
 int main()
 {
@@ -327,7 +306,7 @@ int main()
 
     memsetw(vram, 0, 0x8000);
 
-    set_timer_interval(100);
+    set_timer_interval(50);
     
     pf_enable(0, true);
     pf_enable(1, false);
@@ -344,7 +323,8 @@ int main()
     uint16_t color = 0;
     uint8_t frame_ticks = 0;
     
-    uint8_t test_results[NUM_TESTS];
+    int current_test = 0;
+    uint8_t test_results[NUM_TIMING_TESTS];
 
     while(1)
     {
@@ -354,23 +334,26 @@ int main()
             process_cmd(&active_cmd);
         }
 
-        run_tests(test_results);
+        test_results[current_test] = run_timing_test(current_test);
+        current_test = ( current_test + 1 ) % NUM_TIMING_TESTS;
 
-        snprintf(tmp, sizeof(tmp), "VBLANK: %06X", vblank_count);
-        draw_pf_text(0, 2, 1, tmp);
+        draw_pf_text(0, 0, "^0A ^1B ^2C ^3D ^4E ^5F ^6G");
 
-        snprintf(tmp, sizeof(tmp), "AUDIO: %3u", frame_ticks);
-        draw_pf_text(0, 2, 2, tmp);
-
-        for( int i = 0; i < NUM_TESTS; i++ )
+        for( int i = 0; i < NUM_TIMING_TESTS; i++ )
         {
-            snprintf(tmp, sizeof(tmp), "%16s: %3u", s_tests[i].name, test_results[i]);
-            draw_pf_text(0, 2, 4 + i, tmp);
+            int tick_color = 3;
+            if (test_results[i] != timing_tests[i].hw_ticks) tick_color = 5;
+
+            snprintf(tmp, sizeof(tmp), "^6%c ^7%20s: ^%u%3u ^4(%u)",
+                i == current_test ? '*' : ' ',
+                timing_tests[i].name,
+                tick_color,
+                test_results[i],
+                timing_tests[i].hw_ticks
+            );
+            draw_pf_text(0, 2 + i, tmp);
         }
  
-        //comms_status(tmp, sizeof(tmp));
-        //draw_pf_text(0, 2, 2, tmp);
-        
         wait_vblank();
         reg_spritecontrol[4] = 0;
 

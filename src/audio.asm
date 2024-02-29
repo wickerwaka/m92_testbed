@@ -91,7 +91,7 @@ config_timer:
 	mov dx, 0x1200
 	call ym_write
 
-	mov dx, 0x143f ; 00110101 F Reset, IRQ A EN, LOAD A
+	mov dx, 0x1415 ; 00110101 F Reset, IRQ A EN, LOAD A
 	call ym_write
 
 	pop dx
@@ -127,16 +127,25 @@ ym_write:
 align 4
 p0_handler:
 	push dx
-
-	mov dx, 0x1435
-	call ym_write
+	push es
+	mov dx, 0xa800
+	mov es, dx
 
     mov dl, ss:[tick_count]
     inc dl
     mov ss:[tick_count], dl
 
-    mov ss:[0x8046], dl
+    mov byte ss:[0x8046], dl
 
+.clear_flag:
+	mov dx, 0x1415
+	call ym_write
+	;mov dl, es:[0x42]
+    ;test dl, 0x01
+    ;jnz .clear_flag
+
+
+    pop es
 	pop dx
 	db 0x0f, 0x92 ; FINI
 	iret

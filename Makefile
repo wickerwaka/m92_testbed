@@ -3,10 +3,10 @@ OBJCOPY = ia16-elf-objcopy
 MAME = bin/irem_emu
 SPLIT_ROM = bin/split_rom.py
 NASM = nasm
-MISTER_HOSTNAME=mister-dev
+MISTER=root@mister-dev
 
 TARGET = gunforce_test
-C_SRCS = main.c comms.c interrupts_default.c init.c printf/printf.c
+C_SRCS = main.c comms.c interrupts_default.c init.c timing_tests.c printf/printf.c
 ASM_SRCS = entry.S
 NASM_SRCS = timing.asm
 
@@ -118,6 +118,12 @@ debug: $(BUILT_BINS)
 run: $(BUILT_BINS)
 	mkdir -p mame
 	cd mame && ../$(MAME) -window -nomaximize -resolution0 640x480 -rompath "$(ROMPATH)" $(GAME)
+
+mister: $(BUILD_DIR)/audio.bin $(BUILD_DIR)/cpu.bin src/$(GAME).mra
+	zip -j $(BUILD_DIR)/$(GAME).zip $(BUILD_DIR)/audio.bin $(BUILD_DIR)/cpu.bin
+	scp $(BUILD_DIR)/$(GAME).zip $(MISTER):/media/fat/games/mame/
+	scp src/$(GAME).mra $(MISTER):/media/fat/_Arcade/
+	ssh $(MISTER) "echo load_core _Arcade/$(GAME).mra > /dev/MiSTer_cmd"
 
 flash_low: $(BUILD_DIR)/cpu_low_$(EPROM_SIZE).bin
 	minipro -p $(EPROM_TYPE) -w $<
