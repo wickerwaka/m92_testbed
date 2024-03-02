@@ -5,7 +5,7 @@
 
 typedef enum
 {
-#define TEST(desc, name, ticks) TIMING_TEST_ ##name,
+#define TEST(desc, name, page, ticks) TIMING_TEST_ ##name,
 #include "timing_tests_desc.h"
 #undef TEST
     NUM_TIMING_TESTS
@@ -15,6 +15,7 @@ typedef struct
 {
     const char *name;
     uint8_t (*func)();
+    uint8_t page;
     uint8_t hw_ticks;
 } TestDesc;
 

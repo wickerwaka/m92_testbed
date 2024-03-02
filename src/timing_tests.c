@@ -1,13 +1,13 @@
 #include "timing_tests.h"
 #include "interrupts.h"
 
-#define TEST(desc, name, ticks) extern uint8_t name();
+#define TEST(desc, name, page, ticks) extern uint8_t name();
 #include "timing_tests_desc.h"
 #undef TEST
 
 TestDesc timing_tests[NUM_TIMING_TESTS] =
 {
-    #define TEST(desc, name, ticks) { desc, name, ticks },
+    #define TEST(desc, name, page, ticks) { desc, name, page, ticks },
     #include "timing_tests_desc.h"
     #undef TEST
 };

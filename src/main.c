@@ -288,6 +288,10 @@ void draw_pf_text(uint16_t x, uint16_t y, const char *str)
     }
 }
 
+#if !defined(FORCE_PAGE)
+#define FORCE_PAGE 0
+#endif
+
 int main()
 {
     __outb(0x40, 0x13);
@@ -326,6 +330,16 @@ int main()
     int current_test = 0;
     uint8_t test_results[NUM_TIMING_TESTS];
 
+    uint16_t page = FORCE_PAGE >= 0 ? FORCE_PAGE : 0;
+    uint16_t num_pages = 1;
+    for( int i = 0; i < NUM_TIMING_TESTS; i++ )
+    {
+        if (timing_tests[i].page + 1 > num_pages)
+            num_pages = timing_tests[i].page + 1;
+    }
+
+    int page_delay = 0;
+
     while(1)
     {
         if (comms_update() )
@@ -337,24 +351,38 @@ int main()
         test_results[current_test] = run_timing_test(current_test);
         current_test = ( current_test + 1 ) % NUM_TIMING_TESTS;
 
-        draw_pf_text(0, 0, "^0A ^1B ^2C ^3D ^4E ^5F ^6G");
-
+        int y = 0;
         for( int i = 0; i < NUM_TIMING_TESTS; i++ )
         {
-            int tick_color = 3;
-            if (test_results[i] != timing_tests[i].hw_ticks) tick_color = 5;
+            if (timing_tests[i].page == page)
+            {
+                int tick_color = 3;
+                if (test_results[i] != timing_tests[i].hw_ticks) tick_color = 5;
 
-            snprintf(tmp, sizeof(tmp), "^6%c ^7%20s: ^%u%3u ^4(%u)",
-                i == current_test ? '*' : ' ',
-                timing_tests[i].name,
-                tick_color,
-                test_results[i],
-                timing_tests[i].hw_ticks
-            );
-            draw_pf_text(0, 2 + i, tmp);
+                snprintf(tmp, sizeof(tmp), "^6%c ^7%20s: ^%u%3u ^4(%u)",
+                    i == current_test ? '*' : ' ',
+                    timing_tests[i].name,
+                    tick_color,
+                    test_results[i],
+                    timing_tests[i].hw_ticks
+                );
+                draw_pf_text(0, 2 + y, tmp);
+                y++;
+            }
         }
- 
+
+
         wait_vblank();
+
+        page_delay++;
+
+        if (page_delay > 30 && FORCE_PAGE == -1)
+        {
+            page = ( page + 1 ) % num_pages;
+            page_delay = 0;
+            memsetw(vram, 0, 0x8000);
+        }
+
         reg_spritecontrol[4] = 0;
 
         if (prev_vblank_tick > vblank_tick)
