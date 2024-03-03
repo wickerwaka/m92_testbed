@@ -15,7 +15,7 @@ _start:
     xor %ax, %ax
     mov %ax, %sp
 
-    call exercise_ops
+    //call exercise_ops
     //call small_mov_loop
     //call odd_mov_loop
     //call push_all_loop

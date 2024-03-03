@@ -85,6 +85,7 @@ $(BUILD_DIR)/%.o: src/%.asm $(GLOBAL_DEPS) | $(BUILD_DIRS)
 $(BUILD_DIR)/cpu.elf: $(OBJS) linker/$(GAME).ld
 	@echo $@
 	@$(CC) -T linker/$(GAME).ld -o $@ $(LDFLAGS) $(OBJS) $(LIBS)
+	ia16-elf-objdump -d -M i8086,intel,intel-mnemonic $@ > $(BUILD_DIR)/cpu.asm
 
 $(BUILD_DIRS):
 	mkdir -p $@
