@@ -19,7 +19,8 @@ _start:
     //call small_mov_loop
     //call odd_mov_loop
     //call push_all_loop
-    call prefetch_loop
+    //call prefetch_loop
+    call nop_fetching
 
     // Zero out bss data
 	cld

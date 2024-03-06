@@ -238,3 +238,23 @@ align 2
     out dx, al
 
     jmp .pre_nop
+
+
+align 256
+global nop_fetching
+nop_fetching:
+    mov bx, 0xfff0
+    mov dx, 0xdead
+    jmp .start
+.start:
+align 8
+    ror    ax,0x1f
+    mov    cx,[bx]
+    nop
+    mov    ax,[bx]
+    sub    ax,cx
+
+    out dx, al
+
+    jmp .start
+
