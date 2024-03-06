@@ -1,7 +1,7 @@
 #include "timing_tests.h"
 #include "interrupts.h"
 
-#define TEST(desc, name, page, ticks) extern uint8_t name();
+#define TEST(desc, name, page, ticks) extern uint16_t name();
 #include "timing_tests_desc.h"
 #undef TEST
 
@@ -12,11 +12,12 @@ TestDesc timing_tests[NUM_TIMING_TESTS] =
     #undef TEST
 };
 
-uint8_t run_timing_test(TimingTest test)
+uint16_t run_timing_test(TimingTest test)
 {
     disable_interrupts();
 
-    uint8_t ticks = timing_tests[test].func();
+    timing_tests[test].func();
+    uint16_t ticks = timing_tests[test].func();
 
     enable_interrupts();
 

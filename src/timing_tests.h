@@ -21,6 +21,6 @@ typedef struct
 
 extern TestDesc timing_tests[NUM_TIMING_TESTS];
 
-uint8_t run_timing_test(TimingTest test);
+uint16_t run_timing_test(TimingTest test);
 
 #endif // TIMING_TESTS_H

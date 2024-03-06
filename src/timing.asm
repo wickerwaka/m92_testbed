@@ -10,42 +10,19 @@ global %1
     push bx
     enter 1024, 0
     mov ax, ss
-    mov ds, ax
     mov es, ax
     mov si, sp
     mov di, sp
-
-.wait_zero:
-    in al, 0x08
-    test al, 0xff
-    jnz .wait_zero
-    mov cx, 0x1000
-    jmp .test_loop
+    mov ax, 0xb000
+    mov ds, ax
+    xor bx, bx
 
 align 2
-.test_loop:
+    ror ax, 31
+    mov dx, [bx]
     %2
-    %2
-    %2
-    %2
-
-    %2
-    %2
-    %2
-    %2
-
-    %2
-    %2
-    %2
-    %2
-
-    %2
-    %2
-    %2
-    %2
-
-    loop .test_loop
-    in al, 0x08
+    mov ax, [bx]
+    sub ax, dx
 
     leave
     pop bx
@@ -55,21 +32,6 @@ align 2
     pop ds
     ret
 %endmacro
-
-global loop_test
-loop_test:
-.wait_zero:
-    mov cx, 0x0000
-    in al, 0x08
-    test al, 0xff
-    jnz .wait_zero
-
-.test_loop:
-    nop
-    loop .test_loop
-    in al, 0x08
-
-    ret
 
 time_basic just_nop, nop
 time_basic dec_ax, { dec ax }
@@ -88,24 +50,24 @@ time_basic mov_from_mem_seg, { mov ax, ss:[di + 4] }
 time_basic mov_to_mem_seg, { mov ss:[di + 4], ax }
 time_basic add_mem, { add [di], ax }
 time_basic add_mem_seg, { add ss:[di], ax }
-time_basic ror0, { ror dx, 0 }
-time_basic ror1, { ror dx, 1 }
-time_basic ror2, { ror dx, 2 }
-time_basic ror3, { ror dx, 3 }
-time_basic ror4, { ror dx, 4 }
-time_basic ror5, { ror dx, 5 }
-time_basic ror6, { ror dx, 6 }
-time_basic ror7, { ror dx, 7 }
-time_basic ror8, { ror dx, 8 }
-time_basic ror9, { ror dx, 9 }
-time_basic ror10, { ror dx, 10 }
-time_basic ror11, { ror dx, 11 }
-time_basic ror12, { ror dx, 12 }
-time_basic ror13, { ror dx, 13 }
-time_basic ror14, { ror dx, 14 }
-time_basic ror15, { ror dx, 15 }
-time_basic ror16, { ror dx, 16 }
-time_basic rorc80, { rcr dx, 80 }
+time_basic ror0, { ror ax, 0 }
+time_basic ror1, { ror ax, 1 }
+time_basic ror2, { ror ax, 2 }
+time_basic ror3, { ror ax, 3 }
+time_basic ror4, { ror ax, 4 }
+time_basic ror5, { ror ax, 5 }
+time_basic ror6, { ror ax, 6 }
+time_basic ror7, { ror ax, 7 }
+time_basic ror8, { ror ax, 8 }
+time_basic ror9, { ror ax, 9 }
+time_basic ror10, { ror ax, 10 }
+time_basic ror11, { ror ax, 11 }
+time_basic ror12, { ror ax, 12 }
+time_basic ror13, { ror ax, 13 }
+time_basic ror14, { ror ax, 14 }
+time_basic ror15, { ror ax, 15 }
+time_basic ror16, { ror ax, 16 }
+time_basic rorc80, { rcr ax, 80 }
 
 
 

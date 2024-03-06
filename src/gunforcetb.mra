@@ -27,7 +27,7 @@
 
     <rom index="0" zip="gunforcetb.zip|gunforce.zip" md5="None">
         <!-- board type -->
-        <part>00</part>
+        <part>ff</part>
 
         <!-- maincpu -->
         <part>00 08 00 00</part>

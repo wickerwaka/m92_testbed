@@ -199,6 +199,7 @@ __far uint16_t *palette_ram = (__far uint16_t *)0xf0008800;
 __far uint16_t *reg_videocontrol = (__far uint16_t *)0xf0009800;
 __far uint16_t *reg_spritecontrol = (__far uint16_t *)0xf0009000;
 __far uint16_t *vram = (__far uint16_t *)0xd0000000;
+__far volatile uint16_t *hwcounter = (__far volatile uint16_t *)0xb0000000;
 
 uint16_t base_palette[] = 
 {
@@ -289,7 +290,7 @@ void draw_pf_text(uint16_t x, uint16_t y, const char *str)
 }
 
 #if !defined(FORCE_PAGE)
-#define FORCE_PAGE 0
+#define FORCE_PAGE -1
 #endif
 
 int main()
@@ -328,7 +329,7 @@ int main()
     uint8_t frame_ticks = 0;
     
     int current_test = 0;
-    uint8_t test_results[NUM_TIMING_TESTS];
+    uint16_t test_results[NUM_TIMING_TESTS];
 
     uint16_t page = FORCE_PAGE >= 0 ? FORCE_PAGE : 0;
     uint16_t num_pages = 1;
@@ -376,7 +377,7 @@ int main()
 
         page_delay++;
 
-        if (page_delay > 30 && FORCE_PAGE == -1)
+        if (page_delay > 300 && FORCE_PAGE == -1)
         {
             page = ( page + 1 ) % num_pages;
             page_delay = 0;
