@@ -2,3 +2,4 @@ build/
 original_roms/
 mame/
 bin/taito_emu
+.DS_Store
