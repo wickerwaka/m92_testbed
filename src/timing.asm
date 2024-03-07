@@ -294,19 +294,19 @@ time_basic_ops:
     time_basic dec_mem3, { dec word [di+4] }
     time_basic dec_mem4, { dec word [di+256] }
     time_basic dec_mem5, { dec word ss:[di+256] }
-    time_basic dec_mem5l, { lock dec word [di+256] }
+    ;time_basic dec_mem5l, { lock dec word [di+256] }
     time_basic dec_mem6, { lock dec word ss:[di+256] }
     time_basic mov_reg_reg, { mov ax, dx }
     time_basic mov_reg_mem, { mov ax, [di] }
-    time_basic mov_reg_mem_lock, { lock mov ax, [di] }
+    ;time_basic mov_reg_mem_lock, { lock mov ax, [di] }
     time_basic mov_mem_reg, { mov [di], ax }
-    time_basic mov_mem_reg_lock, { lock mov [di], ax }
+    ;time_basic mov_mem_reg_lock, { lock mov [di], ax }
     time_basic mov_from_mem, { mov ax, [di + 4] }
     time_basic mov_to_mem, { mov [di + 4], ax }
     time_basic mov_from_mem_seg, { mov ax, ss:[di + 4] }
     time_basic mov_to_mem_seg, { mov ss:[di + 4], ax }
     time_basic add_mem, { add [di], ax }
-    time_basic add_meml, { lock add [di], ax }
+    ;time_basic add_meml, { lock add [di], ax }
     time_basic add_mem_seg, { add ss:[di], ax }
     time_basic ror0, { ror ax, 0 }
     time_basic ror1, { ror ax, 1 }
