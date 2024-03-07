@@ -1,0 +1,29 @@
+; in base is the OE pin
+; out base is data pins
+
+.program oe_check
+
+.wrap_target
+    mov OSR, NULL
+    out PINDIRS, 16
+    wait 0 PIN 0
+    mov OSR, ~NULL
+    out PINDIRS, 16
+    set PINS, 1
+    wait 1 PIN 0
+    set PINS, 0
+.wrap
+
+
+; in base is clock pin
+; out base is data pins 
+.program counter
+
+.wrap_target
+    mov OSR, ~Y
+    out PINS, 16
+    wait 0 PIN 0
+    jmp Y-- dont_care
+dont_care:
+    wait 1 PIN 0
+.wrap
