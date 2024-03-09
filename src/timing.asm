@@ -273,6 +273,20 @@ align 2
 
 %endmacro
 
+%macro with_jmp 2
+    ror ax, 11
+    mov dx, [bx]
+    jmp .%1
+align 2
+.%1:
+    %2
+    mov ax, [bx]
+    sub ax, dx
+    mov dx, 0xdeee
+    out dx, ax
+
+%endmacro
+
 align 256
 global time_basic_ops
 time_basic_ops:
@@ -294,37 +308,23 @@ time_basic_ops:
     time_basic dec_mem3, { dec word [di+4] }
     time_basic dec_mem4, { dec word [di+256] }
     time_basic dec_mem5, { dec word ss:[di+256] }
-    ;time_basic dec_mem5l, { lock dec word [di+256] }
-    time_basic dec_mem6, { lock dec word ss:[di+256] }
-    time_basic mov_reg_reg, { mov ax, dx }
-    time_basic mov_reg_mem, { mov ax, [di] }
-    ;time_basic mov_reg_mem_lock, { lock mov ax, [di] }
-    time_basic mov_mem_reg, { mov [di], ax }
-    ;time_basic mov_mem_reg_lock, { lock mov [di], ax }
-    time_basic mov_from_mem, { mov ax, [di + 4] }
-    time_basic mov_to_mem, { mov [di + 4], ax }
-    time_basic mov_from_mem_seg, { mov ax, ss:[di + 4] }
-    time_basic mov_to_mem_seg, { mov ss:[di + 4], ax }
-    time_basic add_mem, { add [di], ax }
-    ;time_basic add_meml, { lock add [di], ax }
-    time_basic add_mem_seg, { add ss:[di], ax }
-    time_basic ror0, { ror ax, 0 }
-    time_basic ror1, { ror ax, 1 }
-    time_basic ror2, { ror ax, 2 }
-    time_basic ror3, { ror ax, 3 }
-    time_basic ror4, { ror ax, 4 }
-    time_basic ror5, { ror ax, 5 }
-    time_basic ror6, { ror ax, 6 }
-    time_basic ror7, { ror ax, 7 }
-    time_basic ror8, { ror ax, 8 }
-    time_basic ror9, { ror ax, 9 }
-    time_basic ror10, { ror ax, 10 }
-    time_basic ror11, { ror ax, 11 }
-    time_basic ror12, { ror ax, 12 }
-    time_basic ror13, { ror ax, 13 }
-    time_basic ror14, { ror ax, 14 }
-    time_basic ror15, { ror ax, 15 }
-    time_basic ror16, { ror ax, 16 }
+
+    time_basic just_nop_lock, { lock nop }
+    time_basic dec_ax_lock, { lock dec ax }
+    time_basic dec_al_lock, { lock dec al }
+    time_basic dec_mem2_lock, { lock dec word [di] }
+    time_basic dec_mem3_lock, { lock dec word [di+4] }
+    time_basic dec_mem4_lock, { lock dec word [di+256] }
+    time_basic dec_mem5_lock, { lock dec word ss:[di+256] }
+
+    with_jmp just_nop_lock_jmp, { lock nop }
+    with_jmp dec_ax_lock_jmp, { lock dec ax }
+    with_jmp dec_al_lock_jmp, { lock dec al }
+    with_jmp dec_mem2_lock_jmp, { lock dec word [di] }
+    with_jmp dec_mem3_lock_jmp, { lock dec word [di+4] }
+    with_jmp dec_mem4_lock_jmp, { lock dec word [di+256] }
+    with_jmp dec_mem5_lock_jmp, { lock dec word ss:[di+256] }
+
 
     mov dx, 0xdead
     out dx, ax
