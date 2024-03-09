@@ -6,7 +6,7 @@
 
 #define GPIO_DATA_BASE 0
 #define GPIO_OE 16
-#define GPIO_CLK 17
+#define GPIO_CLK 18
 #define GPIO_LED 25
 
 int main() {
