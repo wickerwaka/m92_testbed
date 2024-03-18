@@ -1,11 +1,16 @@
 CC = ia16-elf-gcc
 NASM = nasm
 OBJCOPY = ia16-elf-objcopy
-MAME = bin/m107_flat
+MAME = bin/irem_emu
 SPLIT_ROM = bin/split_rom.py
 MISTER_HOSTNAME=mister-dev
 
-TARGET = airass_test
+ifeq ($(TEST),)
+TARGET = testbed
+else
+TARGET = test_$(TEST)
+endif
+
 C_SRCS = main.c comms.c interrupts_default.c init.c printf/printf.c
 ASM_SRCS = entry.S
 NASM_SRCS = tests.asm timing.asm
@@ -27,7 +32,13 @@ CFLAGS = -march=v30 -mcmodel=small -ffreestanding $(DEFINES) -O2
 LIBS = -lgcc
 LDFLAGS = $(CFLAGS) -static -nostdlib
 
-ifeq ($(TARGET),airass_test)
+ifneq ($(TEST),)
+GAME = airass
+CPU_ROM_L0 = f4-a-l0-etc.l0
+CPU_ROM_H0 = f4-a-h0-etc.h0
+CPU_ROM_SIZE = 0x40000
+DEFINES += -DTEST_NAME="$(TEST)"
+else ifeq ($(TARGET),testbed)
 GAME = airass
 CPU_ROM_L0 = f4-a-l0-etc.l0
 CPU_ROM_H0 = f4-a-h0-etc.h0

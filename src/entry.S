@@ -15,12 +15,9 @@ _start:
     xor %ax, %ax
     mov %ax, %sp
 
-    //call exercise_ops
-    //call small_mov_loop
-    //call odd_mov_loop
-    //call push_all_loop
-    //call prefetch_loop
-    call time_basic_ops
+#if defined(TEST_NAME)
+    call TEST_NAME
+#endif
 
     // Zero out bss data
 	cld
