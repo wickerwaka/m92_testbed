@@ -15,7 +15,7 @@ void input_update()
 
 bool input_down(InputKey key)
 {
-    return (s_cur & key) == 0;
+    return (s_cur & key) != key;
 }
 
 bool input_released(InputKey key)

@@ -11,7 +11,7 @@ else
 TARGET = test_$(TEST)
 endif
 
-C_SRCS = main.c comms.c interrupts_default.c init.c input.c printf/printf.c
+C_SRCS = main.c comms.c interrupts_default.c init.c input.c playfield.c printf/printf.c
 ASM_SRCS = entry.S
 NASM_SRCS = tests.asm timing.asm
 

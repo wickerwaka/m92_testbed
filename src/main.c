@@ -3,6 +3,7 @@
 #include "printf/printf.h"
 
 #include "input.h"
+#include "playfield.h"
 #include "util.h"
 #include "interrupts.h"
 #include "comms.h"
@@ -175,56 +176,6 @@ void process_cmd(Cmd *cmd)
 
 Cmd active_cmd;
 
-__far uint16_t *vram = (__far uint16_t *)0xd0000000;
-
-uint16_t pf_control[4] = { 0, 0, 0, 0 };
-static inline void pf_submit(uint8_t idx)
-{
-    uint16_t port = 0x90 + (idx << 1);
-    __outw(port, pf_control[idx]);
-}
-
-void pf_enable(uint8_t idx, bool enabled)
-{
-    if (enabled)
-        pf_control[idx] &= ~0x0080;
-    else
-        pf_control[idx] |= 0x0080;
-    
-    pf_submit(idx);
-}
-
-void pf_set_vram(uint8_t idx, uint16_t base)
-{
-    pf_control[idx] &= 0xf0ff;
-    pf_control[idx] |= (base >> 4) & 0x0f00;
-    pf_submit(idx);
-}
-
-void pf_set_flags(uint8_t idx, uint8_t flags)
-{
-    pf_control[idx] &= 0xff80;
-    pf_control[idx] |= flags & 0x7f;
-    pf_submit(idx);
-}
-
-
-void pf_set_xy(uint8_t idx, uint16_t x, uint16_t y)
-{
-    uint16_t x_port = 0x82 + (idx << 2);
-    uint16_t y_port = 0x80 + (idx << 2);
-
-    __outw(x_port, x);
-    __outw(y_port, y);
-}
-
-__far uint16_t *pf_addr(uint8_t idx)
-{
-    __far uint16_t *addr = vram;
-    addr += (pf_control[idx] & 0x0f00) << 3;
-    return addr;
-}
-
 __far uint16_t *palette_ram = (__far uint16_t *)0xf0009000;
 
 uint16_t base_palette[] = {
@@ -270,36 +221,6 @@ void wait_vblank()
     while( cnt == vblank_count ) {}
 }
 
-void pf_text(uint8_t layer, uint8_t color, uint16_t x, uint16_t y, const char *str)
-{
-    int ofs = ( x * 64 ) + y;
-    __far uint16_t *addr = pf_addr(layer);
-
-    while(*str)
-    {
-        if( *str == '\n' )
-        {
-            x++;
-            ofs = (x * 64) + y;
-        }
-        else
-        {
-            addr[(ofs << 1) + 1] = color;
-            addr[(ofs << 1)] = *str;
-            ofs += 64;
-        }
-        str++;
-    }
-}
-
-void pf_sym(uint8_t layer, uint8_t color, uint16_t x, uint16_t y, uint16_t sym)
-{
-    int ofs = ( x * 64 ) + y;
-    __far uint16_t *addr = pf_addr(layer);
-
-    addr[(ofs << 1) + 1] = color;
-    addr[(ofs << 1)] = sym;
-}
 
 char tmp[64];
 
@@ -309,7 +230,7 @@ typedef enum
 {
     COMMS = 0,
     PF_BASIC,
-    PF_DEBUG,
+    PF_DBG,
 
     NUM_TEST_MODES
 } TestMode;
@@ -318,22 +239,17 @@ TestMode current_mode = COMMS;
 
 void init_comms_test()
 {
+    pf_reset();
+
     memcpyw(palette_ram, base_palette, sizeof(base_palette) >> 1);
-    memsetw(vram, 0, 0x8000);
 
     __outw(0xb0, 0x0800);
     __outw(0x04, 0x0800);
 
     __outw(0x98, 0x0000);
 
-    pf_enable(0, true);
-    pf_enable(1, false);
-    pf_enable(2, false);
-    pf_enable(3, false);
 
-    pf_set_xy(0, -83, -144);
-    pf_set_flags(0, 0);
-    pf_set_vram(0, 0x0000);
+    pf_enable(0, true);
 }
 
 void update_comms_test()
@@ -350,10 +266,11 @@ void update_comms_test()
 
 void init_pf_test()
 {
-    memcpyw(palette_ram, base_palette, sizeof(base_palette) >> 1);
-    memsetw(vram, 0, 0x8000);
+    pf_reset();
 
-    memsetw(vram + (0xf000 >> 1), 0x08f0, 0x800);
+    memcpyw(palette_ram, base_palette, sizeof(base_palette) >> 1);
+
+    memsetw(VRAM + (0xf000 >> 1), 0x08f0, 0x800);
 
     __outw(0xb0, 0x0800);
     __outw(0x04, 0x0800);
@@ -364,16 +281,6 @@ void init_pf_test()
     pf_enable(1, true);
     pf_enable(2, true);
     pf_enable(3, true);
-
-    pf_set_xy(0, -83, -144);
-    pf_set_xy(1, -81, -144);
-    pf_set_xy(2, -79, -144);
-    pf_set_xy(3, -77, -144);
-
-    pf_set_vram(0, 0x0000);
-    pf_set_vram(1, 0x4000);
-    pf_set_vram(2, 0x8000);
-    pf_set_vram(3, 0xc000);
 
     for( int i = 0; i < 4; i++ )
     {
@@ -394,11 +301,12 @@ void init_pf_test()
     pf_text(1, 1, 8, 18, "NO  SELECT");
     pf_text(2, 2, 8, 17, "ROW SELECT");
 
-    pf_set_flags(3, 0x1);
-    pf_set_flags(2, 0x2);
+    pf_set_flags(3, PF_ROWSCROLL);
+    pf_set_flags(2, PF_ROWSELECT);
 
-    __far uint16_t *sel = &vram[0xec00 >> 1];
-    __far uint16_t *scroll = &vram[0xe600 >> 1];
+    __far uint16_t *sel = pf_rowselect_addr(2);
+    __far uint16_t *scroll = pf_rowscroll_addr(3);
+
     uint16_t ofs = 0;
     for( int r = 8 * 8; r < 8 * 20; r++ )
     {
@@ -424,13 +332,11 @@ void update_pf_test()
 {
 }
 
-uint16_t pf_x = 0;
-uint16_t pf_y = 0;
-
 void init_pf_debug_test()
 {
+    pf_reset();
+
     memcpyw(palette_ram, base_palette, sizeof(base_palette) >> 1);
-    memsetw(vram, 0, 0x8000);
 
     __outw(0xb0, 0x0800);
     __outw(0x04, 0x0800);
@@ -438,38 +344,39 @@ void init_pf_debug_test()
     __outw(0x98, 0x0000);
 
     pf_enable(0, true);
-    pf_enable(1, false);
-    pf_enable(2, false);
     pf_enable(3, true);
 
-    pf_x = 0;
-    pf_y = 0;
+    pf_set_xy(3, 0, 0);
 
-    pf_set_xy(0, -83, -144);
-    pf_set_xy(1, -81, -144);
-    pf_set_xy(2, -79, -144);
-    pf_set_xy(3, pf_x, pf_y);
-
-    pf_set_vram(0, 0x0000);
-    pf_set_vram(1, 0x4000);
-    pf_set_vram(2, 0x8000);
-    pf_set_vram(3, 0xc000);
-
-    pf_set_flags(0, 0x0);
-    pf_set_flags(3, 0x40);
+    pf_set_flags(3, PF_DEBUG);
 }
 
 void update_pf_debug_test()
 {
-    if (input_down(LEFT)) pf_x = pf_x + 7;
-    if (input_down(RIGHT)) pf_x = pf_x - 7;
-    if (input_down(UP)) pf_y = pf_y + 7;
-    if (input_down(DOWN)) pf_y = pf_y - 7;
+    static uint16_t accel = 0;
+    if (input_down(LEFT | RIGHT | UP | DOWN))
+    {
+        accel = accel + 1;
+        if (accel > 127) accel = 127;
+    }
+    else
+    {
+        accel = 0;
+    }
 
-    snprintf(tmp, sizeof(tmp), "X: %04X   Y: %04X", pf_x, pf_y);
+    uint16_t x = pf_get_x(3);
+    uint16_t y = pf_get_y(3);
+
+
+    if (input_down(LEFT)) x = x + (accel >> 2);
+    if (input_down(RIGHT)) x = x - (accel >> 2);
+    if (input_down(UP)) y = y + (accel >> 2);
+    if (input_down(DOWN)) y = y - (accel >> 2);
+
+    snprintf(tmp, sizeof(tmp), "X: %04X   Y: %04X", x, y);
     pf_text(0, 3, 10, 10, tmp);
 
-    pf_set_xy(3, pf_x, pf_y);
+    pf_set_xy(3, x, y);
 }
 
 void init_mode()
@@ -484,7 +391,7 @@ void init_mode()
             init_pf_test();
             break;
         
-        case PF_DEBUG:
+        case PF_DBG:
             init_pf_debug_test();
             break;
 
@@ -505,7 +412,7 @@ void update_mode()
             update_pf_test();
             break;
 
-        case PF_DEBUG:
+        case PF_DBG:
             update_pf_debug_test();
             break;
 
