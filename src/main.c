@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include "printf/printf.h"
 
+#include "input.h"
 #include "util.h"
 #include "interrupts.h"
 #include "comms.h"
@@ -174,14 +175,39 @@ void process_cmd(Cmd *cmd)
 
 Cmd active_cmd;
 
-void pf_enable(uint8_t idx, bool enabled)
+__far uint16_t *vram = (__far uint16_t *)0xd0000000;
+
+uint16_t pf_control[4] = { 0, 0, 0, 0 };
+static inline void pf_submit(uint8_t idx)
 {
     uint16_t port = 0x90 + (idx << 1);
-    if (enabled)
-        __outw(port, 0x00);
-    else
-        __outw(port, 0x80);
+    __outw(port, pf_control[idx]);
 }
+
+void pf_enable(uint8_t idx, bool enabled)
+{
+    if (enabled)
+        pf_control[idx] &= ~0x0080;
+    else
+        pf_control[idx] |= 0x0080;
+    
+    pf_submit(idx);
+}
+
+void pf_set_vram(uint8_t idx, uint16_t base)
+{
+    pf_control[idx] &= 0xf0ff;
+    pf_control[idx] |= (base >> 4) & 0x0f00;
+    pf_submit(idx);
+}
+
+void pf_set_flags(uint8_t idx, uint8_t flags)
+{
+    pf_control[idx] &= 0xff80;
+    pf_control[idx] |= flags & 0x7f;
+    pf_submit(idx);
+}
+
 
 void pf_set_xy(uint8_t idx, uint16_t x, uint16_t y)
 {
@@ -192,31 +218,43 @@ void pf_set_xy(uint8_t idx, uint16_t x, uint16_t y)
     __outw(y_port, y);
 }
 
+__far uint16_t *pf_addr(uint8_t idx)
+{
+    __far uint16_t *addr = vram;
+    addr += (pf_control[idx] & 0x0f00) << 3;
+    return addr;
+}
 
 __far uint16_t *palette_ram = (__far uint16_t *)0xf0009000;
-__far uint16_t *vram = (__far uint16_t *)0xd0000000;
 
 uint16_t base_palette[] = {
-    0x0000, 0x7FFF, 0x67FF, 0x53FF, 0x07FF, 0x035F, 0x029F, 0x025F,
+    // Light Gray
+    0x0000, 0x7FFF, 0x7FFF, 0x77BD, 0x6F7B, 0x5EF7, 0x56B5, 0x4E73,
     0x7FFD, 0x7F93, 0x7ECD, 0x7E28, 0x79A3, 0x6940, 0x2108, 0x0C63,
 
-    0x002A, 0x56B5, 0x5293, 0x4E72, 0x4A51, 0x4610, 0x45CF, 0x45AE,
-    0x55D1, 0x518F, 0x4D4D, 0x490B, 0x44C9, 0x4087, 0x3C45, 0x454C,
+    // Red
+    0x0000, 0x73FF, 0x4F3F, 0x329F, 0x29FF, 0x297F, 0x08DD, 0x1419,
+    0x53FF, 0x3B5F, 0x269F, 0x0DDE, 0x00FE, 0x005A, 0x0010, 0x0007,
 
+    // Orange
     0x0000, 0x7FFF, 0x3FFF, 0x03FF, 0x02FF, 0x01FF, 0x015F, 0x001F,
     0x03F4, 0x0327, 0x02A4, 0x7FE0, 0x5AC0, 0x35A0, 0x2108, 0x0C63,
 
+    // Light Blue
     0x0000, 0x7FFF, 0x7FF6, 0x7FF2, 0x7FCD, 0x736A, 0x6707, 0x5EC7,
     0x5687, 0x4E45, 0x45E4, 0x3DA2, 0x3541, 0x28E0, 0x574B, 0x1000,
 
-    0x0000, 0x739C, 0x027F, 0x01DF, 0x011F, 0x0037, 0x040C, 0x5AD6,
-    0x4610, 0x316B, 0x18C6, 0x0F78, 0x128B, 0x05A4, 0x0120, 0x0401,
+    // Green
+    0x0000, 0x77FF, 0x53FD, 0x3BD7, 0x2F90, 0x1B09, 0x0280, 0x01E0,
+    0x4E73, 0x3DEF, 0x2D6B, 0x227F, 0x7FFF, 0x7FFF, 0x2108, 0x0C63,
 
-    0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF,
-    0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF, 0x7FFF,
+    // Dark Blue
+    0x0000, 0x7FFF, 0x7F2C, 0x7E43, 0x7DA0, 0x7CE0, 0x6440, 0x4000,
+    0x3000, 0x2F7F, 0x0E1F, 0x011F, 0x040E, 0x0407, 0x0035, 0x0000,
 
-    0x0000, 0x7BDE, 0x739B, 0x6B3A, 0x5F18, 0x5AD5, 0x5274, 0x4652,
-    0x420F, 0x39AE, 0x2D8C, 0x2949, 0x20E8, 0x0215, 0x010C, 0x18C6,
+    // Light yellow
+    0x01CA, 0x7FFF, 0x7BFF, 0x73FF, 0x5BFF, 0x37FF, 0x17FF, 0x039F,
+    0x031F, 0x029F, 0x021F, 0x019F, 0x011F, 0x009F, 0x001F, 0x0424,
 };
 
 volatile uint32_t vblank_count = 0;
@@ -232,9 +270,10 @@ void wait_vblank()
     while( cnt == vblank_count ) {}
 }
 
-void draw_pf_text(int color, uint16_t x, uint16_t y, const char *str)
+void pf_text(uint8_t layer, uint8_t color, uint16_t x, uint16_t y, const char *str)
 {
     int ofs = ( x * 64 ) + y;
+    __far uint16_t *addr = pf_addr(layer);
 
     while(*str)
     {
@@ -245,16 +284,235 @@ void draw_pf_text(int color, uint16_t x, uint16_t y, const char *str)
         }
         else
         {
-            vram[(ofs << 1) + 1] = color;
-            vram[(ofs << 1)] = *str;
+            addr[(ofs << 1) + 1] = color;
+            addr[(ofs << 1)] = *str;
             ofs += 64;
         }
         str++;
     }
 }
 
+void pf_sym(uint8_t layer, uint8_t color, uint16_t x, uint16_t y, uint16_t sym)
+{
+    int ofs = ( x * 64 ) + y;
+    __far uint16_t *addr = pf_addr(layer);
+
+    addr[(ofs << 1) + 1] = color;
+    addr[(ofs << 1)] = sym;
+}
+
 char tmp[64];
 
+extern void vram_timing();
+
+typedef enum
+{
+    COMMS = 0,
+    PF_BASIC,
+    PF_DEBUG,
+
+    NUM_TEST_MODES
+} TestMode;
+
+TestMode current_mode = COMMS;
+
+void init_comms_test()
+{
+    memcpyw(palette_ram, base_palette, sizeof(base_palette) >> 1);
+    memsetw(vram, 0, 0x8000);
+
+    __outw(0xb0, 0x0800);
+    __outw(0x04, 0x0800);
+
+    __outw(0x98, 0x0000);
+
+    pf_enable(0, true);
+    pf_enable(1, false);
+    pf_enable(2, false);
+    pf_enable(3, false);
+
+    pf_set_xy(0, -83, -144);
+    pf_set_flags(0, 0);
+    pf_set_vram(0, 0x0000);
+}
+
+void update_comms_test()
+{
+    if (comms_update() )
+    {
+        update_cmd(&active_cmd);
+        process_cmd(&active_cmd);
+    }
+
+    comms_status(tmp, sizeof(tmp));
+    pf_text(0, 6, 2, 2, tmp);
+}
+
+void init_pf_test()
+{
+    memcpyw(palette_ram, base_palette, sizeof(base_palette) >> 1);
+    memsetw(vram, 0, 0x8000);
+
+    memsetw(vram + (0xf000 >> 1), 0x08f0, 0x800);
+
+    __outw(0xb0, 0x0800);
+    __outw(0x04, 0x0800);
+
+    __outw(0x98, 0x0000);
+
+    pf_enable(0, true);
+    pf_enable(1, true);
+    pf_enable(2, true);
+    pf_enable(3, true);
+
+    pf_set_xy(0, -83, -144);
+    pf_set_xy(1, -81, -144);
+    pf_set_xy(2, -79, -144);
+    pf_set_xy(3, -77, -144);
+
+    pf_set_vram(0, 0x0000);
+    pf_set_vram(1, 0x4000);
+    pf_set_vram(2, 0x8000);
+    pf_set_vram(3, 0xc000);
+
+    for( int i = 0; i < 4; i++ )
+    {
+        pf_sym(i, i, i, i, 0x10);
+        pf_sym(i, i, 27 - i, i, 0x11);
+        pf_sym(i, i, 27 - i, 39 - i, 0x13);
+        pf_sym(i, i, i, 39 - i, 0x12);
+    }
+
+    pf_text(0, 0, 10, 10, "LAYER 1");
+    pf_text(1, 1, 10, 10, "LAYER 2");
+    pf_text(2, 2, 10, 10, "LAYER 3");
+    pf_text(3, 3, 10, 9, "LAYER 4");
+
+    pf_text(1, 1, 8, 15, "NO  SCROLL");
+    pf_text(3, 3, 8, 15, "ROW SCROLL");
+
+    pf_text(1, 1, 8, 18, "NO  SELECT");
+    pf_text(2, 2, 8, 17, "ROW SELECT");
+
+    pf_set_flags(3, 0x1);
+    pf_set_flags(2, 0x2);
+
+    __far uint16_t *sel = &vram[0xec00 >> 1];
+    __far uint16_t *scroll = &vram[0xe600 >> 1];
+    uint16_t ofs = 0;
+    for( int r = 8 * 8; r < 8 * 20; r++ )
+    {
+        scroll[r] = ofs >> 3;
+        ofs--;
+    } 
+
+    ofs = 0;
+    for( int r = 8 * 8; r < 12 * 8; r++ )
+    {
+        sel[r] = ofs;
+        ofs--;
+    } 
+    for( int r = 12 * 8; r < 20 * 8; r++ )
+    {
+        sel[r] = ofs;
+        ofs++;
+    } 
+
+}
+
+void update_pf_test()
+{
+}
+
+uint16_t pf_x = 0;
+uint16_t pf_y = 0;
+
+void init_pf_debug_test()
+{
+    memcpyw(palette_ram, base_palette, sizeof(base_palette) >> 1);
+    memsetw(vram, 0, 0x8000);
+
+    __outw(0xb0, 0x0800);
+    __outw(0x04, 0x0800);
+
+    __outw(0x98, 0x0000);
+
+    pf_enable(0, true);
+    pf_enable(1, false);
+    pf_enable(2, false);
+    pf_enable(3, true);
+
+    pf_x = 0;
+    pf_y = 0;
+
+    pf_set_xy(0, -83, -144);
+    pf_set_xy(1, -81, -144);
+    pf_set_xy(2, -79, -144);
+    pf_set_xy(3, pf_x, pf_y);
+
+    pf_set_vram(0, 0x0000);
+    pf_set_vram(1, 0x4000);
+    pf_set_vram(2, 0x8000);
+    pf_set_vram(3, 0xc000);
+
+    pf_set_flags(0, 0x0);
+    pf_set_flags(3, 0x40);
+}
+
+void update_pf_debug_test()
+{
+    if (input_down(LEFT)) pf_x = pf_x + 7;
+    if (input_down(RIGHT)) pf_x = pf_x - 7;
+    if (input_down(UP)) pf_y = pf_y + 7;
+    if (input_down(DOWN)) pf_y = pf_y - 7;
+
+    snprintf(tmp, sizeof(tmp), "X: %04X   Y: %04X", pf_x, pf_y);
+    pf_text(0, 3, 10, 10, tmp);
+
+    pf_set_xy(3, pf_x, pf_y);
+}
+
+void init_mode()
+{
+    switch(current_mode)
+    {
+        case COMMS:
+            init_comms_test();
+            break;
+
+        case PF_BASIC:
+            init_pf_test();
+            break;
+        
+        case PF_DEBUG:
+            init_pf_debug_test();
+            break;
+
+        default:
+            break;
+    }
+}
+
+void update_mode()
+{
+    switch(current_mode)
+    {
+        case COMMS:
+            update_comms_test();
+            break;
+
+        case PF_BASIC:
+            update_pf_test();
+            break;
+
+        case PF_DEBUG:
+            update_pf_debug_test();
+            break;
+
+        default:
+            break;
+    }
+}
 
 int main()
 {
@@ -266,51 +524,25 @@ int main()
     memset(&active_cmd, 0, sizeof(active_cmd));
     last_cmd[0] = 0;
 
-    memcpyw(palette_ram, base_palette, sizeof(base_palette) >> 1);
+    enable_interrupts();
 
-    memsetw(vram, 0, 0x8000);
-
-    __outw(0xb0, 0x0800);
-    __outw(0x04, 0x0800);
-    
-    pf_enable(0, true);
-    pf_enable(1, false);
-    pf_enable(2, false);
-    pf_enable(3, false);
-
-    pf_set_xy(0, -80, -136);
-
-    //enable_interrupts();
-
-    
-    draw_pf_text(6, 5, 5, "HELLO WORLD");
-    
-    snprintf(tmp, sizeof(tmp), "VBLANK: %06X", vblank_count);
-    draw_pf_text(6, 2, 1, tmp);
-    
-    __outw(0xdead, 0xffff);
-
-    while(1) {}
-    
-    uint8_t write_idx = 0;
-    uint32_t comms_count = 0;
-    uint16_t color = 0;
+    current_mode = COMMS;
+    init_mode();
     
     while(1)
     {
-        if (comms_update() )
+        input_update();
+
+        if (input_pressed(START))
         {
-            update_cmd(&active_cmd);
-            process_cmd(&active_cmd);
+            current_mode = (current_mode + 1) % NUM_TEST_MODES;
+            init_mode();
         }
 
-        snprintf(tmp, sizeof(tmp), "VBLANK: %06X", vblank_count);
-        draw_pf_text(6, 2, 1, tmp);
-
-        comms_status(tmp, sizeof(tmp));
-        draw_pf_text(6, 2, 2, tmp);
-
+        update_mode();
+        
         wait_vblank();
+
     }
 
     return 0;

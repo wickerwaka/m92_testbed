@@ -3,7 +3,7 @@ NASM = nasm
 OBJCOPY = ia16-elf-objcopy
 MAME = bin/irem_emu
 SPLIT_ROM = bin/split_rom.py
-MISTER_HOSTNAME=mister-dev
+MISTER=root@mister-dev
 
 ifeq ($(TEST),)
 TARGET = testbed
@@ -11,7 +11,7 @@ else
 TARGET = test_$(TEST)
 endif
 
-C_SRCS = main.c comms.c interrupts_default.c init.c printf/printf.c
+C_SRCS = main.c comms.c interrupts_default.c init.c input.c printf/printf.c
 ASM_SRCS = entry.S
 NASM_SRCS = tests.asm timing.asm
 
@@ -124,6 +124,12 @@ flash_low: $(BUILD_DIR)/cpu_low_$(EPROM_SIZE).bin
 
 flash_high: $(BUILD_DIR)/cpu_high_$(EPROM_SIZE).bin
 	minipro -p $(EPROM_TYPE) -w $<
+
+mister: $(BUILD_DIR)/cpu.bin src/m107_test.mra
+	zip -j $(BUILD_DIR)/m107_test.zip $(BUILD_DIR)/cpu.bin
+	scp $(BUILD_DIR)/m107_test.zip $(MISTER):/media/fat/games/mame/
+	scp src/m107_test.mra $(MISTER):/media/fat/_Arcade/
+	ssh $(MISTER) "echo load_core _Arcade/m107_test.mra > /dev/MiSTer_cmd"
 
 picorom: $(GAME_DIR)/$(CPU_ROM_H0) $(GAME_DIR)/$(CPU_ROM_L0)
 	picorom upload cpu_l0 $(GAME_DIR)/$(CPU_ROM_L0) 2mbit

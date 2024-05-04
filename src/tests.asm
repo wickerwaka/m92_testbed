@@ -284,3 +284,27 @@ exercise_ops:
     out dx, al
     ret
 
+global vram_timing
+vram_timing:
+    push es
+    push ds
+    push di
+    push si
+
+    mov ax, 0xd000
+    mov es, ax
+    mov di, 0xf000
+    mov cx, 0x20
+    rep stosw
+
+    mov ax, 0xd000
+    mov ds, ax
+    mov si, 0xf000
+    mov cx, 0x20
+    rep lodsw
+
+    pop si
+    pop di
+    pop ds
+    pop es
+    ret

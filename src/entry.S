@@ -79,3 +79,14 @@ _large_mov_loop:
 .globl _reset
 _reset:
     ljmp $0x0, $_start
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
