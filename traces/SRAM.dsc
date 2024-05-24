@@ -24,19 +24,10 @@
     "Version": 3,
     "channel": [
         {
-            "colour": "#00c860",
-            "enabled": true,
-            "index": 0,
-            "name": "A0",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 0
-        },
-        {
             "colour": "default",
             "enabled": true,
-            "index": 1,
-            "name": "A1",
+            "index": 0,
+            "name": "A14",
             "strigger": 0,
             "type": 10000,
             "view_index": 1
@@ -44,17 +35,8 @@
         {
             "colour": "default",
             "enabled": true,
-            "index": 2,
-            "name": "A2",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 2
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 3,
-            "name": "A3",
+            "index": 1,
+            "name": "A12",
             "strigger": 0,
             "type": 10000,
             "view_index": 3
@@ -62,44 +44,8 @@
         {
             "colour": "default",
             "enabled": true,
-            "index": 4,
-            "name": "A4",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 4
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 5,
-            "name": "A5",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 5
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 6,
-            "name": "A6",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 6
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 7,
+            "index": 2,
             "name": "A7",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 7
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 8,
-            "name": "A12",
             "strigger": 0,
             "type": 10000,
             "view_index": 8
@@ -107,8 +53,8 @@
         {
             "colour": "default",
             "enabled": true,
-            "index": 9,
-            "name": "A14",
+            "index": 3,
+            "name": "A6",
             "strigger": 0,
             "type": 10000,
             "view_index": 9
@@ -116,8 +62,8 @@
         {
             "colour": "default",
             "enabled": true,
-            "index": 10,
-            "name": "VPULSE",
+            "index": 4,
+            "name": "A5",
             "strigger": 0,
             "type": 10000,
             "view_index": 10
@@ -125,8 +71,8 @@
         {
             "colour": "default",
             "enabled": true,
-            "index": 11,
-            "name": "CLK_13M",
+            "index": 5,
+            "name": "A4",
             "strigger": 0,
             "type": 10000,
             "view_index": 11
@@ -134,8 +80,8 @@
         {
             "colour": "default",
             "enabled": true,
-            "index": 12,
-            "name": "/WE",
+            "index": 6,
+            "name": "A3",
             "strigger": 0,
             "type": 10000,
             "view_index": 12
@@ -143,8 +89,8 @@
         {
             "colour": "default",
             "enabled": true,
-            "index": 13,
-            "name": "A13",
+            "index": 7,
+            "name": "A2",
             "strigger": 0,
             "type": 10000,
             "view_index": 13
@@ -152,8 +98,8 @@
         {
             "colour": "default",
             "enabled": true,
-            "index": 14,
-            "name": "A8",
+            "index": 8,
+            "name": "A1",
             "strigger": 0,
             "type": 10000,
             "view_index": 14
@@ -161,17 +107,17 @@
         {
             "colour": "default",
             "enabled": true,
-            "index": 15,
-            "name": "A9",
-            "strigger": 2,
+            "index": 9,
+            "name": "A0",
+            "strigger": 0,
             "type": 10000,
             "view_index": 15
         },
         {
             "colour": "default",
             "enabled": true,
-            "index": 16,
-            "name": "A11",
+            "index": 10,
+            "name": "/CE",
             "strigger": 0,
             "type": 10000,
             "view_index": 16
@@ -179,7 +125,16 @@
         {
             "colour": "default",
             "enabled": true,
-            "index": 17,
+            "index": 11,
+            "name": "A10",
+            "strigger": 0,
+            "type": 10000,
+            "view_index": 5
+        },
+        {
+            "colour": "default",
+            "enabled": true,
+            "index": 12,
             "name": "/OE",
             "strigger": 0,
             "type": 10000,
@@ -188,150 +143,96 @@
         {
             "colour": "default",
             "enabled": true,
-            "index": 18,
-            "name": "A10",
+            "index": 13,
+            "name": "A11",
+            "strigger": 0,
+            "type": 10000,
+            "view_index": 4
+        },
+        {
+            "colour": "default",
+            "enabled": true,
+            "index": 14,
+            "name": "A9",
+            "strigger": 0,
+            "type": 10000,
+            "view_index": 6
+        },
+        {
+            "colour": "default",
+            "enabled": true,
+            "index": 15,
+            "name": "A8",
+            "strigger": 0,
+            "type": 10000,
+            "view_index": 7
+        },
+        {
+            "colour": "default",
+            "enabled": true,
+            "index": 16,
+            "name": "A13",
+            "strigger": 0,
+            "type": 10000,
+            "view_index": 2
+        },
+        {
+            "colour": "default",
+            "enabled": true,
+            "index": 17,
+            "name": "/WE",
             "strigger": 0,
             "type": 10000,
             "view_index": 18
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 19,
-            "name": "/CE",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 19
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 20,
-            "name": "HPULSE",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 20
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 21,
-            "name": "/READY",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 21
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 22,
-            "name": "/MEMWR",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 22
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 23,
-            "name": "CLK_PIXEL",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 23
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 24,
-            "name": "BLANK",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 24
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 25,
-            "name": "SYNC",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 25
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 26,
-            "name": "VBLANK",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 26
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 27,
-            "name": "HINT",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 27
-        },
-        {
-            "colour": "default",
-            "enabled": true,
-            "index": 31,
-            "name": "COLOR0",
-            "strigger": 0,
-            "type": 10000,
-            "view_index": 28
         }
     ],
     "decoder": [
         {
             "channel": [
                 {
-                    "d15": 9
+                    "d15": 0
                 },
                 {
-                    "d14": 13
+                    "d14": 16
                 },
                 {
-                    "d13": 8
+                    "d13": 1
                 },
                 {
-                    "d12": 16
+                    "d12": 13
                 },
                 {
-                    "d11": 18
+                    "d11": 11
                 },
                 {
-                    "d10": 15
+                    "d10": 14
                 },
                 {
-                    "d9": 14
+                    "d9": 15
                 },
                 {
-                    "d8": 7
+                    "d8": 2
                 },
                 {
-                    "d7": 6
+                    "d7": 3
                 },
                 {
-                    "d6": 5
+                    "d6": 4
                 },
                 {
-                    "d5": 4
+                    "d5": 5
                 },
                 {
-                    "d4": 3
+                    "d4": 6
                 },
                 {
-                    "d3": 2
+                    "d3": 7
                 },
                 {
-                    "d2": 1
+                    "d2": 8
                 },
                 {
-                    "d1": 0
+                    "d1": 9
                 }
             ],
             "id": "parallel",
@@ -349,11 +250,11 @@
             "stacked decoders": [
             ],
             "version": 2,
-            "view_index": -1
+            "view_index": 0
         }
     ],
     "trigger": {
-        "advTriggerMode": true,
+        "advTriggerMode": false,
         "serialTriggerBits": 0,
         "serialTriggerChannel": 0,
         "serialTriggerClock": "X X X X X X X X X X X X X X X X",

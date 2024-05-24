@@ -9,6 +9,8 @@ CMD_READ_BYTES = 3
 CMD_READ_WORDS = 4
 CMD_FILL_BYTES = 5
 CMD_FILL_WORDS = 6
+CMD_OUT_WORD = 7
+CMD_IN_WORD = 8
 
 class PicoError(Exception):
     pass
@@ -61,6 +63,13 @@ class Pico:
     def fill_words(self, addr: int, count: int, value: int):
         word = pack("<H", value)
         self.do_cmd(CMD_FILL_WORDS, addr, count, word, 0)
+    
+    def out_word(self, addr: int, value: int):
+        self.do_cmd(CMD_OUT_WORD, addr, value, None, 0)
+
+    def in_word(self, addr: int) -> int:
+        data = self.do_cmd(CMD_IN_WORD, addr, 0, None, 2)
+        return unpack("<H", data)[0]
 
 class MemoryByteView:
     def __init__(self, pico: Pico, base_addr: int):
@@ -124,8 +133,9 @@ class MemoryWordView:
         else:
             raise TypeError()
 
-#pico = Pico('cpu_l0')
+pico = Pico('cpu_l0')
 
+pico.out_word(0x98, int(sys.argv[1]))
 #memw = MemoryWordView(pico, 0x200000)
 #memw[0] = 0xffff
 

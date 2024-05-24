@@ -46,6 +46,9 @@ CPU_ROM_SIZE = 0x40000
 else ifeq ($(TARGET),airass)
 GAME = airass
 ORIGINAL = 1
+else ifeq ($(TARGET),dsoccr94)
+GAME = dsoccr94
+ORIGINAL = 1
 else
 error
 endif

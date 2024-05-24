@@ -19,6 +19,8 @@ enum
     CMD_READ_WORDS = 4,
     CMD_FILL_BYTES = 5,
     CMD_FILL_WORDS = 6,
+    CMD_OUT_WORD = 7,
+    CMD_IN_WORD = 8
 };
 
 typedef struct Cmd
@@ -165,7 +167,20 @@ void process_cmd(Cmd *cmd)
             }
             break;
         }
+        
+        case CMD_OUT_WORD:
+        {
+            __outw(cmd->arg0, cmd->arg1);
+            break;
+        }
 
+        case CMD_IN_WORD:
+        {
+            uint16_t val = __inw(cmd->arg0);
+            comms_write(&val, 2);
+            break;
+        }
+        
         case CMD_IDLE: break;
 
         default:
@@ -175,6 +190,40 @@ void process_cmd(Cmd *cmd)
 }
 
 Cmd active_cmd;
+
+
+typedef struct
+{
+    uint16_t y : 11;
+    uint16_t height : 2;
+    uint16_t pad0 : 3;
+    uint16_t sprite : 15;
+    uint16_t pad1 : 1;
+    uint16_t color : 7;
+    uint16_t prio : 1;
+    uint16_t flipx : 1;
+    uint16_t flipy : 1;
+    uint16_t pad2 : 6;
+    uint16_t x : 11;
+    uint16_t pad3 : 5;
+} ObjInst;
+
+typedef struct
+{
+    uint16_t hdr0;
+    uint16_t hdr1;
+    uint16_t hdr2;
+    uint16_t hdr3;
+
+    ObjInst insts[0x1ff];
+    uint16_t colors[2048];
+} ObjPalBuffer;
+
+_Static_assert(sizeof(ObjInst) == 8, "sizeof(ObjInst) != 4");
+_Static_assert(sizeof(ObjPalBuffer) == 8192, "sizeof(ObjPalBuffer) != 2048");
+
+static __far ObjPalBuffer *BUFFER = (__far ObjPalBuffer *)0xf8000000;
+static __far uint16_t *BUFFER_U16 = (__far uint16_t *)0xf8000000;
 
 __far uint16_t *palette_ram = (__far uint16_t *)0xf0009000;
 
@@ -221,6 +270,45 @@ void wait_vblank()
     while( cnt == vblank_count ) {}
 }
 
+bool test_memory_region(__far void *region, uint16_t count)
+{
+    __far uint16_t *ptr = (__far uint16_t *)region;
+    
+    for( uint16_t initial = 0x5; initial != 0x0; initial-- )
+    {
+        uint16_t second = 0xd;
+        uint16_t val = initial;
+        for( uint16_t x = 0; x < count; x++ )
+        {
+            ptr[x] = val;
+            val++;
+            second--;
+            if( second == 0)
+            {
+                val++;
+                second = 0xd;
+            }
+        }
+
+        val = initial;
+        second = 0xd;
+
+        for( uint16_t x = 0; x < count; x++ )
+        {
+            if( ptr[x] != val ) return false;
+
+            val++;
+            second--;
+            if( second == 0)
+            {
+                val++;
+                second = 0xd;
+            }
+        }
+    }
+
+    return true;
+}
 
 char tmp[64];
 
@@ -231,11 +319,14 @@ typedef enum
     COMMS = 0,
     PF_BASIC,
     PF_DBG,
+    BUFRAM,
+    SPRITE,
+    PRIORITY,
 
     NUM_TEST_MODES
 } TestMode;
 
-TestMode current_mode = COMMS;
+TestMode current_mode = BUFRAM;
 
 void init_comms_test()
 {
@@ -275,7 +366,7 @@ void init_pf_test()
     __outw(0xb0, 0x0800);
     __outw(0x04, 0x0800);
 
-    __outw(0x98, 0x0000);
+    __outw(0x98, 0x0002);
 
     pf_enable(0, true);
     pf_enable(1, true);
@@ -285,8 +376,8 @@ void init_pf_test()
     for( int i = 0; i < 4; i++ )
     {
         pf_sym(i, i, i, i, 0x10);
-        pf_sym(i, i, 27 - i, i, 0x11);
-        pf_sym(i, i, 27 - i, 39 - i, 0x13);
+        pf_sym(i, i, 28 - i, i, 0x11);
+        pf_sym(i, i, 28 - i, 39 - i, 0x13);
         pf_sym(i, i, i, 39 - i, 0x12);
     }
 
@@ -353,6 +444,12 @@ void init_pf_debug_test()
 
 void update_pf_debug_test()
 {
+
+    if (comms_update() )
+    {
+        update_cmd(&active_cmd);
+        process_cmd(&active_cmd);
+    }
     static uint16_t accel = 0;
     if (input_down(LEFT | RIGHT | UP | DOWN))
     {
@@ -379,6 +476,217 @@ void update_pf_debug_test()
     pf_set_xy(3, x, y);
 }
 
+void init_bufram_test()
+{
+    pf_reset();
+
+    memsetw(BUFFER, 0, sizeof(ObjPalBuffer) / 2);
+
+    memcpyw(palette_ram, base_palette, sizeof(base_palette) >> 1);
+
+    __outw(0xb0, 0x0800);
+    __outw(0x04, 0x0800);
+
+    __outw(0x98, 0x0000);
+
+    pf_enable(0, true);
+
+    pf_text(0, 1, 10, 10, "BUFRAM TEST");
+}
+
+void update_bufram_test()
+{
+    static uint16_t ctrl = 0;
+    static bool run_test = false;
+    static uint16_t valid = 0x0;
+    if (run_test)
+    {
+        valid = 0x0;
+        __outw(0xb0, 0);
+        if( test_memory_region(BUFFER_U16, 0x1000) ) valid |= 0x1;
+        __outw(0xb0, 1);
+        if( test_memory_region(BUFFER_U16, 0x800) ) valid |= 0x2;
+        __outw(0xb0, 2);
+        if( test_memory_region(BUFFER_U16, 0x1000) ) valid |= 0x4;
+        __outw(0xb0, 3);
+        if( test_memory_region(BUFFER_U16, 0x400) ) valid |= 0x8;
+        __outw(0xb0, 4);
+        if( test_memory_region(BUFFER_U16, 0x400) ) valid |= 0x10;
+        __outw(0xb0, 0);
+
+        run_test = false;
+    }
+
+    if (input_pressed(UP)) ctrl += 1;
+    if (input_pressed(DOWN)) ctrl -= 1;
+    if (input_pressed(LEFT)) ctrl <<= 1;
+    if (input_pressed(RIGHT)) ctrl >>= 1;
+
+    if (input_pressed(UP)) run_test = true;
+
+    snprintf(tmp, sizeof(tmp), "VALID: %04X", valid);
+    pf_text(0, 1, 5, 14, tmp);
+}
+
+
+IMPORT_BIN(".text", "src/stage8_wing.bin", sprite_data);
+extern __far const uint16_t sprite_data[];
+
+void init_sprite_test()
+{
+    pf_reset();
+
+    __outw(0x98, 0x0000);
+
+    pf_enable(0, true);
+}
+
+void update_sprite_test()
+{
+    __far uint16_t *insts = (__far uint16_t *)0xf8000000;
+
+    while ((__inw(0x02) & 0x0080) == 0x0000) {}
+
+    __outw(0xb0, 0x800);
+    // copy palette
+    memcpyw(insts + 0x800, sprite_data + 0x800, 0x800);
+    
+    // clear sprite
+    memsetw(insts, 0xe000, 0x800);
+    // copy pre-amble
+    memcpyw(insts, sprite_data, 0x4);
+
+    static uint16_t sidx = 0;
+
+    if (input_pressed(LEFT)) sidx -= 1;
+    if (input_pressed(RIGHT)) sidx += 1;
+    sidx &= 0x1ff;
+
+    if(sidx == 0)
+        memcpyw(insts, sprite_data, 0x800);
+    else
+        memcpyw(insts + 4, sprite_data + (sidx * 4), 0x4);
+
+    snprintf(tmp, sizeof(tmp), "SPRITE: %04X", sidx);
+    pf_text(0, 5, 10, 14, tmp);
+
+    wait_vblank();
+
+    __outw(0xb0, 0x800);
+    __outw(0x04, 0x800);
+}
+
+void init_priority_test()
+{
+    pf_reset();
+
+    __outw(0x98, 0x0000);
+
+    pf_enable(0, true);
+    pf_enable(1, true);
+    pf_enable(2, true);
+    pf_enable(3, true);
+}
+
+void update_priority_test()
+{
+    while ((__inw(0x02) & 0x0080) == 0x0000) {}
+
+    __outw(0xb0, 0x800);
+    // copy palette
+    memcpyw(BUFFER->colors, sprite_data + 0x800, 0x800);
+    
+    // clear sprite
+    memsetw(BUFFER->insts, 0xe000, sizeof(BUFFER->insts) / 2);
+
+    BUFFER->hdr0 = 248;
+    BUFFER->hdr1 = 518;
+    BUFFER->hdr2 = 0;
+    BUFFER->hdr3 = 64;
+
+    __far ObjInst *inst = BUFFER->insts;
+
+    inst->y = 308;
+    inst->height = 0;
+    inst->pad0 = 3;
+    inst->sprite = 6196;
+    inst->pad1 = 0;
+    inst->color = 30;
+    inst->prio = 1;
+    inst->flipx = 0;
+    inst->flipy = 0;
+    inst->pad2 = 32;
+    inst->x = 164;
+    inst->pad3 = 16;
+
+    inst++;
+
+    inst->y = 308;
+    inst->height = 0;
+    inst->pad0 = 3;
+    inst->sprite = 6196;
+    inst->pad1 = 0;
+    inst->color = 30;
+    inst->prio = 1;
+    inst->flipx = 0;
+    inst->flipy = 1;
+    inst->pad2 = 32;
+    inst->x = 324;
+    inst->pad3 = 16;
+
+    inst++;
+
+    inst->y = 196;
+    inst->height = 0;
+    inst->pad0 = 3;
+    inst->sprite = 6196;
+    inst->pad1 = 0;
+    inst->color = 30;
+    inst->prio = 0;
+    inst->flipx = 1;
+    inst->flipy = 1;
+    inst->pad2 = 0x0;
+    inst->x = 340;
+    inst->pad3 = 0xf;
+
+    inst++;
+
+    inst->y = 196;
+    inst->height = 0;
+    inst->pad0 = 3;
+    inst->sprite = 6196;
+    inst->pad1 = 0;
+    inst->color = 30;
+    inst->prio = 0;
+    inst->flipx = 1;
+    inst->flipy = 0;
+    inst->pad2 = 32;
+    inst->x = 180;
+    inst->pad3 = 16;
+
+    wait_vblank();
+
+    __outw(0xb0, 0x800);
+    __outw(0x04, 0x800);
+
+    for( int x = 0; x < 30; x++)
+    {
+        for( int y = 0; y < 41; y++)
+            pf_sym(3, 0, x, y, (y^x) & 1 ? 0x7 : 0x4);
+    }
+
+/*    pf_text(0, 2, 0, 19, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+    pf_text(1, 1, 0, 20, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+    pf_text(2, 1, 0, 21, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+    //pf_text(3, 1, 0, 22, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+
+    pf_text(0, 1 | PF_PRIO0, 0, 24, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+    pf_text(1, 1 | PF_PRIO0, 0, 25, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+    pf_text(2, 1 | PF_PRIO0, 0, 26, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+    //pf_text(3, 1 | PF_PRIO0, 0, 27, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+*/
+}
+
 void init_mode()
 {
     switch(current_mode)
@@ -393,6 +701,18 @@ void init_mode()
         
         case PF_DBG:
             init_pf_debug_test();
+            break;
+
+        case BUFRAM:
+            init_bufram_test();
+            break;
+
+        case SPRITE:
+            init_sprite_test();
+            break;
+
+        case PRIORITY:
+            init_priority_test();
             break;
 
         default:
@@ -416,6 +736,18 @@ void update_mode()
             update_pf_debug_test();
             break;
 
+        case BUFRAM:
+            update_bufram_test();
+            break;
+
+        case SPRITE:
+            update_sprite_test();
+            break;
+
+        case PRIORITY:
+            update_priority_test();
+            break;
+
         default:
             break;
     }
@@ -431,9 +763,11 @@ int main()
     memset(&active_cmd, 0, sizeof(active_cmd));
     last_cmd[0] = 0;
 
+    //memsetw((__far void *)0xf0008000, 0x0000, 0x2000);
+
     enable_interrupts();
 
-    current_mode = COMMS;
+    current_mode = PF_BASIC;
     init_mode();
     
     while(1)

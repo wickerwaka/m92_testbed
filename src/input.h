@@ -6,10 +6,10 @@
 
 typedef enum
 {
-    UP    = 0x0001,
-    DOWN  = 0x0002,
-    LEFT  = 0x0004,
-    RIGHT = 0x0008,
+    RIGHT = 0x0001,
+    LEFT  = 0x0002,
+    DOWN  = 0x0004,
+    UP    = 0x0008,
     BTN1  = 0x0010,
     BTN2  = 0x0020,
     BTN3  = 0x0040,

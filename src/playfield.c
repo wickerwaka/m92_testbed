@@ -20,6 +20,8 @@ void pf_reset()
 {
     memsetw(VRAM, 0, 0x8000);
 
+    pf_control[0] = pf_control[1] = pf_control[2] = pf_control[3] = 0;
+
     pf_enable(0, false);
     pf_enable(1, false);
     pf_enable(2, false);
@@ -95,7 +97,7 @@ __far uint16_t *pf_rowselect_addr(uint8_t idx)
     return VRAM + ((0xe800 + (0x200 * idx)) >> 1);
 }
 
-void pf_text(uint8_t layer, uint8_t color, uint16_t x, uint16_t y, const char *str)
+void pf_text(uint8_t layer, uint16_t color, uint16_t x, uint16_t y, const char *str)
 {
     int ofs = ( x * 64 ) + y;
     __far uint16_t *addr = pf_addr(layer);
@@ -117,7 +119,7 @@ void pf_text(uint8_t layer, uint8_t color, uint16_t x, uint16_t y, const char *s
     }
 }
 
-void pf_sym(uint8_t layer, uint8_t color, uint16_t x, uint16_t y, uint16_t sym)
+void pf_sym(uint8_t layer, uint16_t color, uint16_t x, uint16_t y, uint16_t sym)
 {
     int ofs = ( x * 64 ) + y;
     __far uint16_t *addr = pf_addr(layer);
