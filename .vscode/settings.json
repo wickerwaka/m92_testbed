@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.mra": "xml",
+        "printf.h": "c"
+    }
+}

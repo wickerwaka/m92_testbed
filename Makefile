@@ -1,6 +1,6 @@
 CC = ia16-elf-gcc
 OBJCOPY = ia16-elf-objcopy
-MAME = bin/irem_emu
+MAME = bin/irem_emu_unsecure
 SPLIT_ROM = bin/split_rom.py
 MISTER_HOSTNAME=mister-dev
 
@@ -108,7 +108,9 @@ flash_high: $(BUILD_DIR)/cpu_high_$(EPROM_SIZE).bin
 	minipro -p $(EPROM_TYPE) -w $<
 
 picorom: $(GAME_DIR)/$(CPU_ROM_H0) $(GAME_DIR)/$(CPU_ROM_L0)
+	picorom reset cpu_low low
 	picorom upload cpu_low $(GAME_DIR)/$(CPU_ROM_L0) 1mbit
 	picorom upload cpu_high $(GAME_DIR)/$(CPU_ROM_H0) 1mbit
+	picorom reset cpu_low z
 
 -include $(OBJS:o=d)
