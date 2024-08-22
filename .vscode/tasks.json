@@ -1,0 +1,43 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Deploy to PicoROM",
+			"command": "",
+			"args": [
+				"make",
+				"-j4",
+				"picorom"
+			],
+			"options": {
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "Build",
+			"command": "",
+			"args": [
+				"make",
+				"-j4",
+				"all"
+			],
+			"options": {
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	]
+}

@@ -6,6 +6,7 @@
 #include "interrupts.h"
 #include "comms.h"
 #include "v35_sfr.h"
+#include "playfield.h"
 
 #include "game_palette.h"
 
@@ -180,24 +181,6 @@ void process_cmd(Cmd *cmd)
 
 Cmd active_cmd;
 
-void pf_enable(uint8_t idx, bool enabled)
-{
-    uint16_t port = 0x80 + 10 + (idx << 1);
-    if (enabled)
-        __outw(port, 0x00);
-    else
-        __outw(port, 0x10);
-}
-
-void pf_set_xy(uint8_t idx, uint16_t x, uint16_t y)
-{
-    uint16_t x_port = 0x82 + ((idx & 0x1) << 2);
-    uint16_t y_port = 0x80 + ((idx & 0x1) << 2);
-
-    __outw(x_port, x);
-    __outw(y_port, y);
-}
-
 
 __far uint16_t *palette_ram = (__far uint16_t *)0xe0000000;
 __far uint16_t *vram = (__far uint16_t *)0xd0000000;
@@ -223,28 +206,6 @@ void wait_vblank()
     while( cnt == vblank_count ) {}
 }
 
-void draw_pf_text(int color, uint16_t x, uint16_t y, const char *str)
-{
-    int ofs = ( y * 64 ) + x;
-
-    while(*str)
-    {
-        if( *str == '\n' )
-        {
-            y++;
-            ofs = (y * 64) + x;
-        }
-        else
-        {
-            vram[(ofs << 1) + 1] = color;
-            vram[(ofs << 1)] = *str;
-            ofs++;
-        }
-        str++;
-    }
-}
-
-
 int main()
 {
     init_sfr->idb = 0x9f;
@@ -263,9 +224,11 @@ int main()
     memsetw(vram, 0x00, 0x8000);
 
     pf_enable(0, true);
-    pf_enable(1, false);
+    pf_enable(1, true);
 
+    pf_set_vram(0, 0x8000);
     pf_set_xy(0, -81, -140);
+    pf_set_xy(1, -77, -140);
 
     memcpyw(palette_ram, game_palette, 256);
 
@@ -288,13 +251,14 @@ int main()
 
         wait_vblank();
 
-        snprintf(tmp, sizeof(tmp), "VBLANK: %06X", vblank_count);
-        draw_pf_text(3, 2, 1, tmp);
+        snprintf(tmp, sizeof(tmp), "VBLANK: %04X", vblank_count);
+        pf_text(0, 3, 2, 1, tmp);
+        pf_text(1, 3 | PF_PRIO1, 2, 2, tmp);
 
         comms_status(tmp, sizeof(tmp));
-        draw_pf_text(4, 2, 2, tmp);
+        pf_text(0, 4, 2, 20, tmp);
 
-        draw_pf_text(1, 2, 3, last_cmd);
+        pf_text(0, 1, 2, 21, last_cmd);
     }
 
     return 0;
