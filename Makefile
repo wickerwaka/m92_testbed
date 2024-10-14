@@ -5,7 +5,7 @@ SPLIT_ROM = bin/split_rom.py
 MISTER_HOSTNAME=mister-dev
 
 TARGET = bomberman_test
-C_SRCS = main.c comms.c interrupts_default.c init.c printf/printf.c
+C_SRCS = main.c comms.c interrupts_default.c init.c playfield.c printf/printf.c
 ASM_SRCS = entry.S
 
 BUILD_DIR = build/$(TARGET)
@@ -28,6 +28,7 @@ LDFLAGS = $(CFLAGS) -static -nostdlib
 ifeq ($(TARGET),bomberman)
 GAME = bombrman
 ORIGINAL = 1
+MAME = bin/irem_emu
 else ifeq ($(TARGET),bomberman_test)
 GAME = bombrman
 CPU_ROM_L0 = bbm-p0.ic65
@@ -99,7 +100,7 @@ debug: $(BUILT_BINS)
 
 run: $(BUILT_BINS)
 	mkdir -p mame
-	cd mame && ../$(MAME) -window -nomaximize -resolution0 640x480 -rompath "$(ROMPATH)" $(GAME)
+	cd mame && ../$(MAME) -window -nomaximize -resolution0 640x480 -debug -rompath "$(ROMPATH)" $(GAME)
 
 flash_low: $(BUILD_DIR)/cpu_low_$(EPROM_SIZE).bin
 	minipro -p $(EPROM_TYPE) -w $<
