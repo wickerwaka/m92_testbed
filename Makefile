@@ -2,7 +2,7 @@ CC = ia16-elf-gcc
 OBJCOPY = ia16-elf-objcopy
 MAME = bin/irem_emu_unsecure
 SPLIT_ROM = bin/split_rom.py
-MISTER_HOSTNAME=mister-dev
+MISTER=root@mister-dev
 
 TARGET = bomberman_test
 C_SRCS = main.c comms.c interrupts_default.c init.c playfield.c printf/printf.c
@@ -113,5 +113,14 @@ picorom: $(GAME_DIR)/$(CPU_ROM_H0) $(GAME_DIR)/$(CPU_ROM_L0)
 	picorom upload cpu_low $(GAME_DIR)/$(CPU_ROM_L0) 1mbit
 	picorom upload cpu_high $(GAME_DIR)/$(CPU_ROM_H0) 1mbit
 	picorom reset cpu_low z
+
+
+$(BUILD_DIR)/m90_test.zip: $(BUILD_DIR)/cpu.bin
+	zip -j $(BUILD_DIR)/m90_test.zip $(BUILD_DIR)/cpu.bin
+
+mister: $(BUILD_DIR)/m90_test.zip src/m90_test.mra
+	scp $(BUILD_DIR)/m90_test.zip $(MISTER):/media/fat/games/mame/
+	scp src/m90_test.mra $(MISTER):/media/fat/_Arcade/
+	ssh $(MISTER) "echo load_core _Arcade/m90_test.mra > /dev/MiSTer_cmd"
 
 -include $(OBJS:o=d)

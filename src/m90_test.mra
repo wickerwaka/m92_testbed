@@ -1,0 +1,52 @@
+<misterromdescription>
+    <name>Dynablaster / Bomber Man</name>
+    <mameversion>0245</mameversion>
+    <setname>dynablst</setname>
+    <year>1991</year>
+    <manufacturer>Irem</manufacturer>
+    <category>Shooter</category>
+    <rbf>IremM90</rbf>
+    <rotation>horizontal</rotation>
+
+    <players>4</players>
+    <joystick>4-way</joystick>
+    <num_buttons>2</num_buttons>
+    <buttons default="B,A,Start,Select" names="Fire,Psy-Bits Control,-,-,-,-,Start,Coin,P2 Start,Pause"></buttons>
+    <switches default="00 00 00">
+        <dip bits="0,1" ids="3,2,4,5" name="Lives"></dip>
+        <dip bits="2,3" ids="Normal,Easy,Hard,Very Easy" name="Difficulty"></dip>
+
+        <dip bits="5" ids="Yes,No" name="Allow Continue"></dip>
+        <dip bits="6" ids="Off,On" name="Demo Sounds"></dip>
+        <dip bits="7" ids="Off,On" name="Service Mode"></dip>
+        <dip bits="8" ids="Off,On" name="Flip Screen"></dip>
+
+        <dip bits="12,15" ids="1C/1C,2C/1C,3C/1C,4C/1C,5C/1C,6C/1C,1C/2C,1C/3C,1C/4C,1C/5C,1C/6C,2C/3C,3C/2C,4C/3C,2S/1C,Free Play" name="Coin Mode"></dip>
+    </switches>
+
+    <rom index="0" zip="dynablst.zip|m90_test.zip" md5="None">
+        <!-- board type -->
+        <part>00</part>
+
+        <!-- maincpu -->
+        <part>00 04 00 00</part>
+	    <part name="cpu.bin" />
+
+        <!-- gfx -->
+        <part>01 10 00 00</part>
+        <interleave output="32">
+        	<part name="bbm-c0.ic66" crc="695d2019" map="0001" />
+        	<part name="bbm-c1.ic67" crc="4c7c8bbc" map="0010" />
+        	<part name="bbm-c2.ic68" crc="0700d406" map="0100" />
+        	<part name="bbm-c3.ic69" crc="3c3613af" map="1000" />
+        </interleave>
+
+        <!-- sound cpu -->
+        <part>02 01 00 00</part>
+        <part name="bbm-sp.ic23" crc="251090cd" />
+
+        <!-- sound samples -->
+        <part>03 02 00 00</part>
+        <part name="bbm-v0.ic20" crc="0fa803fe" />
+    </rom>
+</misterromdescription>

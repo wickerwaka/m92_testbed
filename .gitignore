@@ -1,3 +1,5 @@
+.cache/
+.sv_cache/
 build/
 original_roms/
 mame/
