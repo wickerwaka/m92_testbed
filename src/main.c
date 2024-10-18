@@ -82,7 +82,7 @@ int main()
 
     while(1)
     {
-        wait_vblank();
+        //wait_vblank();
 
         __far OBJ *obj = &OBJRAM[0];
         obj->x = 200;

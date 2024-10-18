@@ -44,4 +44,15 @@ forever:
 .section .reset.text, "ax"
 .globl _reset
 _reset:
-    ljmp $0x0, $_start 
+    ljmp $0x0, $_start
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
