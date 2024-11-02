@@ -82,28 +82,28 @@ int main()
 
     while(1)
     {
-        //wait_vblank();
+        wait_vblank();
 
         __far OBJ *obj = &OBJRAM[0];
-        obj->x = 200;
+        obj->x = 199;
         obj->color = 3;
         obj->fy = 0;
         obj->fx = 0;
         obj->sprite = 0x20;
         obj->height = 1;
-        obj->y = 232;
+        obj->y = 233;
         obj++;
 
-        obj->x = 216;
+        obj->x = 215;
         obj->color = 3;
         obj->fy = 0;
         obj->fx = 1;
         obj->sprite = 0x20;
         obj->height = 1;
-        obj->y = 232;
+        obj->y = 233;
         obj++;
 
-        obj->x = 240;
+        obj->x = 239;
         obj->color = 3;
         obj->fy = 0;
         obj->fx = 0;
@@ -112,7 +112,7 @@ int main()
         obj->y = 232;
         obj++;
 
-        obj->x = 256;
+        obj->x = 255;
         obj->color = 3;
         obj->fy = 0;
         obj->fx = 1;
@@ -129,6 +129,14 @@ int main()
             if (i & 1) adj++;
         }
 
+        snprintf(tmp, sizeof(tmp), "VLBLANK: %04X", vblank_count);
+        pf_text(0, 3, 10, 4, tmp);
+
+        snprintf(tmp, sizeof(tmp), "P1_P2: %04X   P3_P4: %04X", __inw(0x00), __inw(0x06));
+        pf_text(0, 3, 10, 5, tmp);
+        snprintf(tmp, sizeof(tmp), "SYSTEM: %04X    DSW: %04X", __inw(0x02), __inw(0x04));
+        pf_text(0, 3, 10, 6, tmp);
+
         snprintf(tmp, sizeof(tmp), "ROW OFFSET");
         pf_text(0, 3, 20, 10, tmp);
         snprintf(tmp, sizeof(tmp), "ROW SCROLL");
@@ -140,16 +148,23 @@ int main()
         pf_text(1, 0, 10, 12, tmp);
 
         pf_sym(0, 1, 0, 0, 0x10);
-        pf_sym(1, 0, 1, 1, 0x10);
+        pf_sym(1, 1, 1, 1, 0x10);
 
         pf_sym(0, 1, 0, 29, 0x11);
-        pf_sym(1, 0, 1, 28, 0x11);
+        pf_sym(1, 1, 1, 28, 0x11);
+
 
         pf_sym(0, 1, 39, 0, 0x12);
-        pf_sym(1, 0, 38, 1, 0x12);
+        pf_sym(1, 1, 38, 1, 0x12);
 
         pf_sym(0, 1, 39, 29, 0x13);
-        pf_sym(1, 0, 38, 28, 0x13);
+        pf_sym(1, 1, 38, 28, 0x13);
+
+        pf_sym(0, 1, 14, 15, 0x2);
+        pf_sym(0, 1, 13, 15, 0x4);
+        pf_sym(0, 1, 14, 14, 0x4);
+
+        pf_sym(0, 1, 20, 15, 0x2);
     }
 
     return 0;

@@ -5,8 +5,8 @@
 
 #define NUM_PF 2
 static uint16_t pf_control[NUM_PF] = { 0, 0 };
-static uint16_t pf_x[NUM_PF] = { 0, 0 };
-static uint16_t pf_y[NUM_PF] = { 0, 0 };
+static int16_t pf_x[NUM_PF] = { 0, 0 };
+static int16_t pf_y[NUM_PF] = { 0, 0 };
 
 static inline void pf_submit(uint8_t idx)
 {
@@ -61,7 +61,7 @@ void pf_set_flags(uint8_t idx, uint8_t flags)
     pf_submit(idx);
 }
 
-void pf_set_xy(uint8_t idx, uint16_t x, uint16_t y)
+void pf_set_xy(uint8_t idx, int16_t x, int16_t y)
 {
     pf_x[idx] = x;
     pf_y[idx] = y;
@@ -69,12 +69,12 @@ void pf_set_xy(uint8_t idx, uint16_t x, uint16_t y)
     pf_submit(idx);
 }
 
-uint16_t pf_get_x(uint8_t idx)
+int16_t pf_get_x(uint8_t idx)
 {
     return pf_x[idx];
 }
 
-uint16_t pf_get_y(uint8_t idx)
+int16_t pf_get_y(uint8_t idx)
 {
     return pf_y[idx];
 }

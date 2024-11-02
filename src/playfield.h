@@ -26,9 +26,9 @@ void pf_reset();
 void pf_enable(uint8_t idx, bool enabled);
 void pf_set_vram(uint8_t idx, uint16_t base);
 void pf_set_flags(uint8_t idx, uint8_t flags);
-void pf_set_xy(uint8_t idx, uint16_t x, uint16_t y);
-uint16_t pf_get_x(uint8_t idx);
-uint16_t pf_get_y(uint8_t idx);
+void pf_set_xy(uint8_t idx, int16_t x, int16_t y);
+int16_t pf_get_x(uint8_t idx);
+int16_t pf_get_y(uint8_t idx);
 
 __far uint16_t *pf_addr(uint8_t idx);
 __far uint16_t *pf_rowscroll_addr(uint8_t idx);
